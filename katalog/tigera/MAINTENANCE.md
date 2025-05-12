@@ -11,7 +11,7 @@ To update the YAML file, run the following command:
 
 ```bash
 # assuming katalog/tigera is the root of the repository
-export CALICO_VERSION="3.29.2"
+export CALICO_VERSION="3.30.0"
 curl "https://raw.githubusercontent.com/projectcalico/calico/v${CALICO_VERSION}/manifests/tigera-operator.yaml" --output operator/tigera-operator.yaml
 ```
 
@@ -28,7 +28,7 @@ To download the default configuration from upstream and update the file use the 
 
 ```bash
 # assuming katalog/tigera is the root of the repository
-export CALICO_VERSION="3.29.2"
+export CALICO_VERSION="3.30.0"
 curl https://raw.githubusercontent.com/projectcalico/calico/v${CALICO_VERSION}/manifests/custom-resources.yaml --output on-prem/custom-resources.yaml
 ```
 
