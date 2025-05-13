@@ -48,7 +48,7 @@ Click on each package to see its full documentation.
 | `1.29.x`           | :white_check_mark: | No known issues |
 | `1.30.x`           | :white_check_mark: | No known issues |
 | `1.31.x`           | :white_check_mark: | No known issues |
-| `1.32.x`           |     :warning:      | Tech preview    |
+| `1.32.x`           | :white_check_mark: | No known issues |
 
 
 Check the [compatibility matrix][compatibility-matrix] for additional information on previous releases of the module.
@@ -71,7 +71,7 @@ Check the [compatibility matrix][compatibility-matrix] for additional informatio
 ```yaml
 bases:
   - name: networking
-    version: "v2.1.0"
+    version: "v2.2.0"
 ```
 
 > See `furyctl` [documentation][furyctl-repo] for additional details about `Furyfile.yml` format.

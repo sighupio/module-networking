@@ -50,7 +50,7 @@ To get the dashboards you can use the following commands:
 
 ```bash
 # ⚠️ Assuming $PWD == root of the project
-export CALICO_VERSION="3.29.2"
+export CALICO_VERSION="3.30.0"
 # we split the upstream file and store only the json files
 curl -L https://raw.githubusercontent.com/projectcalico/calico/v${CALICO_VERSION}/manifests/grafana-dashboards.yaml | yq '.data["felix-dashboard.json"]' | sed 's/calico-demo-prometheus/prometheus/g' | jq > ./on-prem/monitoring/dashboards/felix-dashboard.json
 curl -L https://raw.githubusercontent.com/projectcalico/calico/v${CALICO_VERSION}/manifests/grafana-dashboards.yaml | yq '.data["typha-dashboard.json"]' | sed 's/calico-demo-prometheus/prometheus/g' | jq > ./on-prem/monitoring/dashboards/typa-dashboard.json
