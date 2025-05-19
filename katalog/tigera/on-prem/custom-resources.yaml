@@ -3,6 +3,7 @@
 # license that can be found in the LICENSE file.
 
 ---
+
 # This section includes base Calico installation configuration.
 # For more information, see: https://docs.tigera.io/calico/latest/reference/installation/api#operator.tigera.io/v1.Installation
 apiVersion: operator.tigera.io/v1
@@ -32,3 +33,19 @@ spec:
 # metadata:
 #   name: default
 # spec: {}
+
+# ---
+# By default we don't deploy the Calico Goldmane flow aggregator. If you need it / want it you can deploy it by uncommenting the definition below.
+# # Configures the Calico Goldmane flow aggregator.
+# apiVersion: operator.tigera.io/v1
+# kind: Goldmane
+# metadata:
+#   name: default
+
+# ---
+# By default we don't deploy the Calico Whisker observability UI. If you need it / want it you can deploy it by uncommenting the definition below.
+# # Configures the Calico Whisker observability UI.
+# apiVersion: operator.tigera.io/v1
+# kind: Whisker
+# metadata:
+#   name: default

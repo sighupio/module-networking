@@ -11,11 +11,22 @@ To update the YAML file, run the following command:
 
 ```bash
 # assuming katalog/tigera is the root of the repository
-export CALICO_VERSION="3.29.2"
+export CALICO_VERSION="3.30.0"
 curl "https://raw.githubusercontent.com/projectcalico/calico/v${CALICO_VERSION}/manifests/tigera-operator.yaml" --output operator/tigera-operator.yaml
+
+# Update the CRDs.
+curl "https://raw.githubusercontent.com/projectcalico/calico/v${CALICO_VERSION}/manifests/operator-crds.yaml" --output operator/operator-crds.yaml
 ```
 
-No customizations are made.
+We're diverging from upstream by managing the CRDs ourselves, without relying on the operator to handle them. For this reason, make sure that the .spec.template.spec.containers[0].args[0] = "-manage-crds=false". Replace 0 with the actual index of the container regarding the quay.io/tigera/operator image.
+
+Please make sure to update the images inside the `dummy-dictionary-calico-images.yaml`.
+Keep an eye on [this document](https://docs.tigera.io/calico/latest/operations/image-options/imageset#create-an-imageset) to have an idea of the needed images.
+
+This fake deployment with zero replicas is a hack to get our CVE-patching pipeline to detect these images that don't appear anywhere in the manifests, despite being started by the Tigera Operator.
+
+The custom SIGHUP registry is passed to the Tigera Opeator using the `Installation` object
+found in the `custom-resources.yaml` manifest.
 
 ## On-prem
 
@@ -28,7 +39,7 @@ To download the default configuration from upstream and update the file use the 
 
 ```bash
 # assuming katalog/tigera is the root of the repository
-export CALICO_VERSION="3.29.2"
+export CALICO_VERSION="3.30.0"
 curl https://raw.githubusercontent.com/projectcalico/calico/v${CALICO_VERSION}/manifests/custom-resources.yaml --output on-prem/custom-resources.yaml
 ```
 
@@ -50,7 +61,7 @@ To get the dashboards you can use the following commands:
 
 ```bash
 # ⚠️ Assuming $PWD == root of the project
-export CALICO_VERSION="3.29.2"
+export CALICO_VERSION="3.30.0"
 # we split the upstream file and store only the json files
 curl -L https://raw.githubusercontent.com/projectcalico/calico/v${CALICO_VERSION}/manifests/grafana-dashboards.yaml | yq '.data["felix-dashboard.json"]' | sed 's/calico-demo-prometheus/prometheus/g' | jq > ./on-prem/monitoring/dashboards/felix-dashboard.json
 curl -L https://raw.githubusercontent.com/projectcalico/calico/v${CALICO_VERSION}/manifests/grafana-dashboards.yaml | yq '.data["typha-dashboard.json"]' | sed 's/calico-demo-prometheus/prometheus/g' | jq > ./on-prem/monitoring/dashboards/typa-dashboard.json
