@@ -121,9 +121,9 @@ steps:
     depends_on:
       - clone
     commands:
-      - mise use kind@${KIND_VERSION} kubectl@${KUBECTL_VERSION} kustomize@5.6.0
+      - mise use kind@$${KIND_VERSION} kubectl@$${KUBECTL_VERSION} kustomize@5.6.0
       - eval "$(mise activate bash --shims)"
-      - ./scripts/create-e2e-cluster.sh cilium ${CLUSTER_VERSION}
+      - ./scripts/create-e2e-cluster.sh cilium $${CLUSTER_VERSION}
 
   - name: Run E2E Tests
     image: quay.io/sighup/mise:v2025.4.4
@@ -138,7 +138,7 @@ steps:
     depends_on:
       - Create Kind Cluster
     commands:
-      - mise use bats@${BATS_VERSION} kubectl@${KUBECTL_VERSION} kustomize@5.6.0
+      - mise use bats@$${BATS_VERSION} kubectl@$${KUBECTL_VERSION} kustomize@5.6.0
       - eval "$(mise activate bash --shims)"
       - ./scripts/run-cilium-tests.sh
 
@@ -161,7 +161,7 @@ steps:
         - success
         - failure
     commands:
-      - mise use kind@${KIND_VERSION}
+      - mise use kind@$${KIND_VERSION}
       - eval "$(mise activate bash --shims)"
       - ./scripts/cleanup-e2e-cluster.sh || true
 
@@ -212,9 +212,9 @@ steps:
     depends_on:
       - clone
     commands:
-      - mise use kind@${KIND_VERSION} kubectl@${KUBECTL_VERSION} kustomize@5.6.0
+      - mise use kind@$${KIND_VERSION} kubectl@$${KUBECTL_VERSION} kustomize@5.6.0
       - eval "$(mise activate bash --shims)"
-      - ./scripts/create-e2e-cluster.sh cilium ${CLUSTER_VERSION}
+      - ./scripts/create-e2e-cluster.sh cilium $${CLUSTER_VERSION}
 
   - name: Run E2E Tests
     image: quay.io/sighup/mise:v2025.4.4
@@ -229,7 +229,7 @@ steps:
     depends_on:
       - Create Kind Cluster
     commands:
-      - mise use bats@${BATS_VERSION} kubectl@${KUBECTL_VERSION} kustomize@5.6.0
+      - mise use bats@$${BATS_VERSION} kubectl@$${KUBECTL_VERSION} kustomize@5.6.0
       - eval "$(mise activate bash --shims)"
       - ./scripts/run-cilium-tests.sh
 
@@ -252,7 +252,7 @@ steps:
         - success
         - failure
     commands:
-      - mise use kind@${KIND_VERSION}
+      - mise use kind@$${KIND_VERSION}
       - eval "$(mise activate bash --shims)"
       - ./scripts/cleanup-e2e-cluster.sh || true
 
@@ -303,9 +303,9 @@ steps:
     depends_on:
       - clone
     commands:
-      - mise use kind@${KIND_VERSION} kubectl@${KUBECTL_VERSION} kustomize@5.6.0
+      - mise use kind@$${KIND_VERSION} kubectl@$${KUBECTL_VERSION} kustomize@5.6.0
       - eval "$(mise activate bash --shims)"
-      - ./scripts/create-e2e-cluster.sh cilium ${CLUSTER_VERSION}
+      - ./scripts/create-e2e-cluster.sh cilium $${CLUSTER_VERSION}
 
   - name: Run E2E Tests
     image: quay.io/sighup/mise:v2025.4.4
@@ -320,7 +320,7 @@ steps:
     depends_on:
       - Create Kind Cluster
     commands:
-      - mise use bats@${BATS_VERSION} kubectl@${KUBECTL_VERSION} kustomize@5.6.0
+      - mise use bats@$${BATS_VERSION} kubectl@$${KUBECTL_VERSION} kustomize@5.6.0
       - eval "$(mise activate bash --shims)"
       - ./scripts/run-cilium-tests.sh
 
@@ -343,7 +343,7 @@ steps:
         - success
         - failure
     commands:
-      - mise use kind@${KIND_VERSION}
+      - mise use kind@$${KIND_VERSION}
       - eval "$(mise activate bash --shims)"
       - ./scripts/cleanup-e2e-cluster.sh || true
 
@@ -394,9 +394,9 @@ steps:
     depends_on:
       - clone
     commands:
-      - mise use kind@${KIND_VERSION} kubectl@${KUBECTL_VERSION} kustomize@5.6.0
+      - mise use kind@$${KIND_VERSION} kubectl@$${KUBECTL_VERSION} kustomize@5.6.0
       - eval "$(mise activate bash --shims)"
-      - ./scripts/create-e2e-cluster.sh tigera ${CLUSTER_VERSION}
+      - ./scripts/create-e2e-cluster.sh tigera $${CLUSTER_VERSION}
 
   - name: Run E2E Tests
     image: quay.io/sighup/mise:v2025.4.4
@@ -411,7 +411,7 @@ steps:
     depends_on:
       - Create Kind Cluster
     commands:
-      - mise use bats@${BATS_VERSION} kubectl@${KUBECTL_VERSION} kustomize@5.6.0
+      - mise use bats@$${BATS_VERSION} kubectl@$${KUBECTL_VERSION} kustomize@5.6.0
       - eval "$(mise activate bash --shims)"
       - ./scripts/run-tigera-tests.sh
 
@@ -434,7 +434,7 @@ steps:
         - success
         - failure
     commands:
-      - mise use kind@${KIND_VERSION}
+      - mise use kind@$${KIND_VERSION}
       - eval "$(mise activate bash --shims)"
       - ./scripts/cleanup-e2e-cluster.sh || true
 
@@ -485,9 +485,9 @@ steps:
     depends_on:
       - clone
     commands:
-      - mise use kind@${KIND_VERSION} kubectl@${KUBECTL_VERSION} kustomize@5.6.0
+      - mise use kind@$${KIND_VERSION} kubectl@$${KUBECTL_VERSION} kustomize@5.6.0
       - eval "$(mise activate bash --shims)"
-      - ./scripts/create-e2e-cluster.sh tigera ${CLUSTER_VERSION}
+      - ./scripts/create-e2e-cluster.sh tigera $${CLUSTER_VERSION}
 
   - name: Run E2E Tests
     image: quay.io/sighup/mise:v2025.4.4
@@ -502,7 +502,7 @@ steps:
     depends_on:
       - Create Kind Cluster
     commands:
-      - mise use bats@${BATS_VERSION} kubectl@${KUBECTL_VERSION} kustomize@5.6.0
+      - mise use bats@$${BATS_VERSION} kubectl@$${KUBECTL_VERSION} kustomize@5.6.0
       - eval "$(mise activate bash --shims)"
       - ./scripts/run-tigera-tests.sh
 
@@ -525,7 +525,7 @@ steps:
         - success
         - failure
     commands:
-      - mise use kind@${KIND_VERSION}
+      - mise use kind@$${KIND_VERSION}
       - eval "$(mise activate bash --shims)"
       - ./scripts/cleanup-e2e-cluster.sh || true
 
@@ -576,9 +576,9 @@ steps:
     depends_on:
       - clone
     commands:
-      - mise use kind@${KIND_VERSION} kubectl@${KUBECTL_VERSION} kustomize@5.6.0
+      - mise use kind@$${KIND_VERSION} kubectl@$${KUBECTL_VERSION} kustomize@5.6.0
       - eval "$(mise activate bash --shims)"
-      - ./scripts/create-e2e-cluster.sh tigera ${CLUSTER_VERSION}
+      - ./scripts/create-e2e-cluster.sh tigera $${CLUSTER_VERSION}
 
   - name: Run E2E Tests
     image: quay.io/sighup/mise:v2025.4.4
@@ -593,7 +593,7 @@ steps:
     depends_on:
       - Create Kind Cluster
     commands:
-      - mise use bats@${BATS_VERSION} kubectl@${KUBECTL_VERSION} kustomize@5.6.0
+      - mise use bats@$${BATS_VERSION} kubectl@$${KUBECTL_VERSION} kustomize@5.6.0
       - eval "$(mise activate bash --shims)"
       - ./scripts/run-tigera-tests.sh
 
@@ -616,7 +616,7 @@ steps:
         - success
         - failure
     commands:
-      - mise use kind@${KIND_VERSION}
+      - mise use kind@$${KIND_VERSION}
       - eval "$(mise activate bash --shims)"
       - ./scripts/cleanup-e2e-cluster.sh || true
 ---
