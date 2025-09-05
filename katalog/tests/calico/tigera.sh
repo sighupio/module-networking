@@ -29,6 +29,9 @@ load ./../helper
 # 
 @test "Install Tigera operator and calico operated" {
     info
+    show "Pre-creating calico-system namespace for kapp deployment..."
+    kubectl create namespace calico-system --dry-run=client -o yaml | kubectl apply -f -
+    show "Deploying Tigera operator using GitOps-style kapp deployment..."
     test() {
         apply katalog/tigera/on-prem
     }
@@ -37,20 +40,50 @@ load ./../helper
     [ "$status" -eq 0 ]
 }
 
-@test "Calico Kube Controller is Running" {
+@test "Tigera Operator Deployment is Ready" {
     info
+    show "Waiting for tigera-operator deployment to be fully ready..."
     test() {
-        kubectl get pods -l k8s-app=calico-kube-controllers -o json -n calico-system |jq '.items[].status.containerStatuses[].ready' | uniq | grep -q true
+        check_deploy_ready "tigera-operator" "tigera-operator"
     }
     loop_it test 60 5
     status=${loop_it_result}
     [ "$status" -eq 0 ]
 }
 
-@test "Calico Node is Running" {
+@test "Calico Node DaemonSet is Ready" {
     info
+    show "Waiting for calico-node daemonset to be ready on all nodes..."
     test() {
-        kubectl get pods -l k8s-app=calico-node -o json -n calico-system |jq '.items[].status.containerStatuses[].ready' | uniq | grep -q true
+        check_ds_ready "calico-node" "calico-system"
+    }
+    loop_it test 120 5
+    status=${loop_it_result}
+    [ "$status" -eq 0 ]
+}
+
+@test "Calico Kube Controllers Deployment is Ready" {
+    info  
+    show "Waiting for calico-kube-controllers deployment to be fully ready..."
+    test() {
+        check_deploy_ready "calico-kube-controllers" "calico-system"
+    }
+    loop_it test 60 5
+    status=${loop_it_result}
+    [ "$status" -eq 0 ]
+}
+
+@test "Calico Typha Deployment is Ready (if exists)" {
+    info
+    show "Checking if calico-typha deployment exists and is ready..."
+    test() {
+        # First check if typha exists, if not, that's fine for small clusters
+        if kubectl get deployment calico-typha -n calico-system &>/dev/null; then
+            check_deploy_ready "calico-typha" "calico-system"
+        else
+            show "Calico Typha not deployed (expected for small clusters)"
+            return 0
+        fi
     }
     loop_it test 60 5
     status=${loop_it_result}

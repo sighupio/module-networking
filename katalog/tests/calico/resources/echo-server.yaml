@@ -3,6 +3,28 @@
 # license that can be found in the LICENSE file.
 
 ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+data:
+  default.conf: |
+    server {
+        listen 80;
+        server_name localhost;
+
+        location / {
+            return 200 "Hello from echoserver pod: $hostname\n";
+            add_header Content-Type text/plain;
+        }
+
+        location /health {
+            access_log off;
+            return 200 "OK\n";
+            add_header Content-Type text/plain;
+        }
+    }
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -18,11 +40,19 @@ spec:
         app: echoserver
     spec:
       containers:
-      - image: registry.sighup.io/fury/google_containers/echoserver:1.10
+      - image: registry.sighup.io/fury/nginx:latest
         imagePullPolicy: Always
         name: echoserver
         ports:
-        - containerPort: 8080
+        - containerPort: 80
+        volumeMounts:
+        - name: nginx-config
+          mountPath: /etc/nginx/conf.d/default.conf
+          subPath: default.conf
+      volumes:
+      - name: nginx-config
+        configMap:
+          name: nginx-config
 ---
 apiVersion: v1
 kind: Service
@@ -31,7 +61,7 @@ metadata:
 spec:
   ports:
   - port: 80
-    targetPort: 8080
+    targetPort: 80
     protocol: TCP
   selector:
     app: echoserver

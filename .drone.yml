@@ -2,743 +2,659 @@
 # Use of this source code is governed by a BSD-style
 # license that can be found in the LICENSE file.
 
-name: license
+name: Check for license presence
 kind: pipeline
 type: docker
-
+node:
+  performance: low
+clone:
+  depth: 1
 steps:
   - name: check
     image: docker.io/library/golang:1.21
     pull: always
     commands:
       - go install github.com/google/addlicense@v1.1.1
-      - addlicense -c "SIGHUP s.r.l" -v -l bsd --check .
+      - addlicense -c "SIGHUP s.r.l" -v -l bsd -y "2017-present" --check .
+
 ---
-name: policeman
+name: Linting
 kind: pipeline
 type: docker
-
+node:
+  performance: low
+depends_on:
+  - Check for license presence
+clone:
+  depth: 1
 platform:
   os: linux
   arch: amd64
 
-depends_on:
-  - license
+environment:
+  # Mise configuration
+  MISE_DATA_DIR: "/mise-data"
 
+volumes:
+  - name: mise-cache
+    host:
+      path: /root/mise_data_dir
 steps:
-  - name: lint
-    image: quay.io/sighup/policeman
+  - name: Render Manifests
+    image: quay.io/sighup/mise:v2025.4.4
     pull: always
     environment:
-      FILTER_REGEX_EXCLUDE: (\.github)
-      # Identifies false positives like missing 'selector'.
-      # Doing this is valid for Kustomize patches
-      VALIDATE_KUBERNETES_KUBEVAL: "false"
-      # Some duplicated code is intended.
-      VALIDATE_JSCPD: "false"
-      # hadolint already validated dockerfiles
-      VALIDATE_DOCKERFILE: "false"
-      # Disable natural language checks
-      VALIDATE_NATURAL_LANGUAGE: "false"
-      # Disable dot-env checks
-      VALIDATE_ENV: "false"
-    depends_on:
-      - clone
-
-  - name: render
-    image: quay.io/sighup/e2e-testing:2.24.17_1.1.0_3.12.0_1.32.2_5.6.0_4.33.3
-    pull: always
+      GITHUB_TOKEN:
+        from_secret: github_token
+    volumes:
+      - name: mise-cache
+        path: /mise-data
     depends_on:
       - clone
     commands:
+      - mise use kustomize@5.6.0
+      - eval "$(mise activate bash --shims)"
       - kustomize build katalog/cilium > cilium.yml
       - kustomize build katalog/tigera/on-prem > tigera-on-prem.yml
 
-  - name: check-deprecated-apis
+  - &check-deprecated-apis
+    name: check-deprecated-apis-cilium
     image: us-docker.pkg.dev/fairwinds-ops/oss/pluto:v5
     pull: always
     depends_on:
-      - render
+      - Render Manifests
     commands:
       # we use --ignore-deprecations because we don't want the CI to fail when the API has not been removed yet.
-      - /pluto detect cilium.yml --ignore-deprecations --target-versions=k8s=v1.32.0
-      - /pluto detect tigera-on-prem.yml --ignore-deprecations --target-versions=k8s=v1.32.0
+      - /pluto detect $${KUBERNETES_MANIFESTS} --ignore-deprecations --target-versions=k8s=v1.33.0
+    environment:
+      KUBERNETES_MANIFESTS: cilium.yml
+
+  - <<: *check-deprecated-apis
+    name: check-deprecated-apis-tigera
+    environment:
+      KUBERNETES_MANIFESTS: tigera-on-prem.yml
+
 ---
-name: e2e-kubernetes-1.29-tigera-operator
+name: E2E Tests Cilium K8s 1.31
 kind: pipeline
 type: docker
-
-depends_on:
-  - policeman
-
 platform:
   os: linux
   arch: amd64
-
+depends_on:
+  - Linting
+clone:
+  depth: 1
 trigger:
   ref:
     include:
       - refs/tags/**
 
-steps:
-  - name: create Kind cluster
-    image: quay.io/sighup/dind-kind-kubectl-kustomize:0.24.0_1.29.1_3.10.0
-    pull: always
-    volumes:
-      - name: dockersock
-        path: /var/run/docker.sock
-    environment:
-      CLUSTER_VERSION: v1.29.8
-      CLUSTER_NAME: ${DRONE_BUILD_NUMBER}-${DRONE_STAGE_NAME}
-      # /drone/src is the default workdir for the pipeline
-      # using this folder we don't need to mount another
-      # shared volume between the steps
-      KUBECONFIG: /drone/src/kubeconfig-${DRONE_STAGE_NAME}
-    commands:
-      # create a custom config to disable Kind's default CNI so
-      # we can test using KFD's networking module.
-      - |
-        cat <<EOF > kind-config.yaml
-        kind: Cluster
-        apiVersion: kind.x-k8s.io/v1alpha4
-        networking:
-          disableDefaultCNI: true
-        EOF
-      # NOTE: kind's `--wait` flag that waits for the control-plane ot be ready
-      # does not work when disabling the default CNI. It will always go in timeout.
-      - kind create cluster --name $${CLUSTER_NAME} --image registry.sighup.io/fury/kindest/node:$${CLUSTER_VERSION} --config kind-config.yaml
-      # save the kubeconfig so we can use it from other steps.
-      - kind get kubeconfig --name $${CLUSTER_NAME} > $${KUBECONFIG}
-
-  - name: e2e
-    image: quay.io/sighup/e2e-testing:2.24.17_1.1.0_3.12.0_1.32.2_5.6.0_4.33.3
-    pull: always
-    network_mode: host
-    environment:
-      CLUSTER_NAME: ${DRONE_BUILD_NUMBER}-${DRONE_STAGE_NAME}
-      KUBECONFIG: /drone/src/kubeconfig-${DRONE_STAGE_NAME}
-      FURYCTL_VERSION: v0.28.0
-    depends_on: [create Kind cluster]
-    commands:
-      - bats -t katalog/tests/calico/tigera.sh
-
-  - name: delete-kind-cluster
-    image: quay.io/sighup/dind-kind-kubectl-kustomize:0.24.0_1.29.1_3.10.0
-    volumes:
-      - name: dockersock
-        path: /var/run/docker.sock
-    environment:
-      CLUSTER_NAME: ${DRONE_BUILD_NUMBER}-${DRONE_STAGE_NAME}
-    commands:
-      # does not matter if the command fails
-      - kind delete cluster --name $${CLUSTER_NAME} || true
-    depends_on:
-      - e2e
-    when:
-      status:
-        - success
-        - failure
+environment:
+  # Mise configuration
+  MISE_DATA_DIR: "/mise-data"
+  KIND_VERSION: "0.29.0"
+  KUBECTL_VERSION: "1.31.1"
+  BATS_VERSION: "1.11.0"
+  CLUSTER_VERSION: v1.31.0
+  KUBECONFIG: kubeconfig-131-cilium
+  CLUSTER_NAME: ${DRONE_REPO_NAME}-${DRONE_BUILD_NUMBER}-131-cilium
 
 volumes:
   - name: dockersock
     host:
       path: /var/run/docker.sock
+  - name: mise-cache
+    host:
+      path: /root/mise_data_dir
+steps:
+  - name: Create Kind Cluster
+    image: quay.io/sighup/mise:v2025.4.4
+    pull: always
+    network_mode: host
+    environment:
+      GITHUB_TOKEN:
+        from_secret: github_token
+    volumes:
+      - name: dockersock
+        path: /var/run/docker.sock
+      - name: mise-cache
+        path: /mise-data
+    depends_on:
+      - clone
+    commands:
+      - mise use kind@${KIND_VERSION} kubectl@${KUBECTL_VERSION} kustomize@5.6.0
+      - eval "$(mise activate bash --shims)"
+      - ./scripts/create-e2e-cluster.sh cilium ${CLUSTER_VERSION#v}
+
+  - name: Run E2E Tests
+    image: quay.io/sighup/mise:v2025.4.4
+    pull: always
+    network_mode: host
+    environment:
+      GITHUB_TOKEN:
+        from_secret: github_token
+    volumes:
+      - name: mise-cache
+        path: /mise-data
+    depends_on:
+      - Create Kind Cluster
+    commands:
+      - mise use bats@${BATS_VERSION} kubectl@${KUBECTL_VERSION} kustomize@5.6.0
+      - eval "$(mise activate bash --shims)"
+      - ./scripts/run-cilium-tests.sh
+
+  - name: Delete Kind Cluster
+    image: quay.io/sighup/mise:v2025.4.4
+    pull: always
+    network_mode: host
+    environment:
+      GITHUB_TOKEN:
+        from_secret: github_token
+    volumes:
+      - name: dockersock
+        path: /var/run/docker.sock
+      - name: mise-cache
+        path: /mise-data
+    depends_on:
+      - Run E2E Tests
+    when:
+      status:
+        - success
+        - failure
+    commands:
+      - mise use kind@${KIND_VERSION}
+      - eval "$(mise activate bash --shims)"
+      - ./scripts/cleanup-e2e-cluster.sh || true
+
 ---
-name: e2e-kubernetes-1.30-tigera-operator
+name: E2E Tests Cilium K8s 1.32
 kind: pipeline
 type: docker
-
-depends_on:
-  - e2e-kubernetes-1.29-tigera-operator
-
 platform:
   os: linux
   arch: amd64
-
+depends_on:
+  - Linting
+clone:
+  depth: 1
 trigger:
   ref:
     include:
       - refs/tags/**
 
-steps:
-  - name: create Kind cluster
-    image: quay.io/sighup/dind-kind-kubectl-kustomize:0.24.0_1.30.5_4.5.2
-    pull: always
-    volumes:
-      - name: dockersock
-        path: /var/run/docker.sock
-    environment:
-      CLUSTER_VERSION: v1.30.4
-      CLUSTER_NAME: ${DRONE_BUILD_NUMBER}-${DRONE_STAGE_NAME}
-      # /drone/src is the default workdir for the pipeline
-      # using this folder we don't need to mount another
-      # shared volume between the steps
-      KUBECONFIG: /drone/src/kubeconfig-${DRONE_STAGE_NAME}
-    commands:
-      # create a custom config to disable Kind's default CNI so
-      # we can test using KFD's networking module.
-      - |
-        cat <<EOF > kind-config.yaml
-        kind: Cluster
-        apiVersion: kind.x-k8s.io/v1alpha4
-        networking:
-          disableDefaultCNI: true
-        EOF
-      # NOTE: kind's `--wait` flag that waits for the control-plane ot be ready
-      # does not work when disabling the default CNI. It will always go in timeout.
-      - kind create cluster --name $${CLUSTER_NAME} --image registry.sighup.io/fury/kindest/node:$${CLUSTER_VERSION} --config kind-config.yaml
-      # save the kubeconfig so we can use it from other steps.
-      - kind get kubeconfig --name $${CLUSTER_NAME} > $${KUBECONFIG}
-
-  - name: e2e
-    image: quay.io/sighup/e2e-testing:2.24.17_1.1.0_3.12.0_1.32.2_5.6.0_4.33.3
-    pull: always
-    network_mode: host
-    environment:
-      CLUSTER_NAME: ${DRONE_BUILD_NUMBER}-${DRONE_STAGE_NAME}
-      KUBECONFIG: /drone/src/kubeconfig-${DRONE_STAGE_NAME}
-      FURYCTL_VERSION: v0.28.0
-    depends_on: [create Kind cluster]
-    commands:
-      - bats -t katalog/tests/calico/tigera.sh
-
-  - name: delete-kind-cluster
-    image: quay.io/sighup/dind-kind-kubectl-kustomize:0.24.0_1.30.5_4.5.2
-    volumes:
-      - name: dockersock
-        path: /var/run/docker.sock
-    environment:
-      CLUSTER_NAME: ${DRONE_BUILD_NUMBER}-${DRONE_STAGE_NAME}
-    commands:
-      # does not matter if the command fails
-      - kind delete cluster --name $${CLUSTER_NAME} || true
-    depends_on:
-      - e2e
-    when:
-      status:
-        - success
-        - failure
+environment:
+  # Mise configuration
+  MISE_DATA_DIR: "/mise-data"
+  KIND_VERSION: "0.29.0"
+  KUBECTL_VERSION: "1.32.2"
+  BATS_VERSION: "1.11.0"
+  CLUSTER_VERSION: v1.32.2
+  KUBECONFIG: kubeconfig-132-cilium
+  CLUSTER_NAME: ${DRONE_REPO_NAME}-${DRONE_BUILD_NUMBER}-132-cilium
 
 volumes:
   - name: dockersock
     host:
       path: /var/run/docker.sock
+  - name: mise-cache
+    host:
+      path: /root/mise_data_dir
+steps:
+  - name: Create Kind Cluster
+    image: quay.io/sighup/mise:v2025.4.4
+    pull: always
+    network_mode: host
+    environment:
+      GITHUB_TOKEN:
+        from_secret: github_token
+    volumes:
+      - name: dockersock
+        path: /var/run/docker.sock
+      - name: mise-cache
+        path: /mise-data
+    depends_on:
+      - clone
+    commands:
+      - mise use kind@${KIND_VERSION} kubectl@${KUBECTL_VERSION} kustomize@5.6.0
+      - eval "$(mise activate bash --shims)"
+      - ./scripts/create-e2e-cluster.sh cilium ${CLUSTER_VERSION#v}
+
+  - name: Run E2E Tests
+    image: quay.io/sighup/mise:v2025.4.4
+    pull: always
+    network_mode: host
+    environment:
+      GITHUB_TOKEN:
+        from_secret: github_token
+    volumes:
+      - name: mise-cache
+        path: /mise-data
+    depends_on:
+      - Create Kind Cluster
+    commands:
+      - mise use bats@${BATS_VERSION} kubectl@${KUBECTL_VERSION} kustomize@5.6.0
+      - eval "$(mise activate bash --shims)"
+      - ./scripts/run-cilium-tests.sh
+
+  - name: Delete Kind Cluster
+    image: quay.io/sighup/mise:v2025.4.4
+    pull: always
+    network_mode: host
+    environment:
+      GITHUB_TOKEN:
+        from_secret: github_token
+    volumes:
+      - name: dockersock
+        path: /var/run/docker.sock
+      - name: mise-cache
+        path: /mise-data
+    depends_on:
+      - Run E2E Tests
+    when:
+      status:
+        - success
+        - failure
+    commands:
+      - mise use kind@${KIND_VERSION}
+      - eval "$(mise activate bash --shims)"
+      - ./scripts/cleanup-e2e-cluster.sh || true
+
 ---
-name: e2e-kubernetes-1.31-tigera-operator
+name: E2E Tests Cilium K8s 1.33
 kind: pipeline
 type: docker
-
-depends_on:
-  - e2e-kubernetes-1.30-tigera-operator
-
 platform:
   os: linux
   arch: amd64
-
+depends_on:
+  - Linting
+clone:
+  depth: 1
 trigger:
   ref:
     include:
       - refs/tags/**
 
-steps:
-  - name: create Kind cluster
-    image: quay.io/sighup/dind-kind-kubectl-kustomize:0.24.0_1.31.1_4.5.2
-    pull: always
-    volumes:
-      - name: dockersock
-        path: /var/run/docker.sock
-    environment:
-      CLUSTER_VERSION: v1.31.1
-      CLUSTER_NAME: ${DRONE_BUILD_NUMBER}-${DRONE_STAGE_NAME}
-      # /drone/src is the default workdir for the pipeline
-      # using this folder we don't need to mount another
-      # shared volume between the steps
-      KUBECONFIG: /drone/src/kubeconfig-${DRONE_STAGE_NAME}
-    commands:
-      # create a custom config to disable Kind's default CNI so
-      # we can test using KFD's networking module.
-      - |
-        cat <<EOF > kind-config.yaml
-        kind: Cluster
-        apiVersion: kind.x-k8s.io/v1alpha4
-        networking:
-          disableDefaultCNI: true
-        EOF
-      # NOTE: kind's `--wait` flag that waits for the control-plane ot be ready
-      # does not work when disabling the default CNI. It will always go in timeout.
-      - kind create cluster --name $${CLUSTER_NAME} --image registry.sighup.io/fury/kindest/node:$${CLUSTER_VERSION} --config kind-config.yaml
-      # save the kubeconfig so we can use it from other steps.
-      - kind get kubeconfig --name $${CLUSTER_NAME} > $${KUBECONFIG}
-
-  - name: e2e
-    image: quay.io/sighup/e2e-testing:2.24.17_1.1.0_3.12.0_1.32.2_5.6.0_4.33.3
-    pull: always
-    network_mode: host
-    environment:
-      CLUSTER_NAME: ${DRONE_BUILD_NUMBER}-${DRONE_STAGE_NAME}
-      KUBECONFIG: /drone/src/kubeconfig-${DRONE_STAGE_NAME}
-      FURYCTL_VERSION: v0.28.0
-    depends_on: [create Kind cluster]
-    commands:
-      - bats -t katalog/tests/calico/tigera.sh
-
-  - name: delete-kind-cluster
-    image: quay.io/sighup/dind-kind-kubectl-kustomize:0.24.0_1.31.1_4.5.2
-    volumes:
-      - name: dockersock
-        path: /var/run/docker.sock
-    environment:
-      CLUSTER_NAME: ${DRONE_BUILD_NUMBER}-${DRONE_STAGE_NAME}
-    commands:
-      # does not matter if the command fails
-      - kind delete cluster --name $${CLUSTER_NAME} || true
-    depends_on:
-      - e2e
-    when:
-      status:
-        - success
-        - failure
+environment:
+  # Mise configuration
+  MISE_DATA_DIR: "/mise-data"
+  KIND_VERSION: "0.29.0"
+  KUBECTL_VERSION: "1.33.4"
+  BATS_VERSION: "1.11.0"
+  CLUSTER_VERSION: v1.33.0
+  KUBECONFIG: kubeconfig-133-cilium
+  CLUSTER_NAME: ${DRONE_REPO_NAME}-${DRONE_BUILD_NUMBER}-133-cilium
 
 volumes:
   - name: dockersock
     host:
       path: /var/run/docker.sock
+  - name: mise-cache
+    host:
+      path: /root/mise_data_dir
+steps:
+  - name: Create Kind Cluster
+    image: quay.io/sighup/mise:v2025.4.4
+    pull: always
+    network_mode: host
+    environment:
+      GITHUB_TOKEN:
+        from_secret: github_token
+    volumes:
+      - name: dockersock
+        path: /var/run/docker.sock
+      - name: mise-cache
+        path: /mise-data
+    depends_on:
+      - clone
+    commands:
+      - mise use kind@${KIND_VERSION} kubectl@${KUBECTL_VERSION} kustomize@5.6.0
+      - eval "$(mise activate bash --shims)"
+      - ./scripts/create-e2e-cluster.sh cilium ${CLUSTER_VERSION#v}
+
+  - name: Run E2E Tests
+    image: quay.io/sighup/mise:v2025.4.4
+    pull: always
+    network_mode: host
+    environment:
+      GITHUB_TOKEN:
+        from_secret: github_token
+    volumes:
+      - name: mise-cache
+        path: /mise-data
+    depends_on:
+      - Create Kind Cluster
+    commands:
+      - mise use bats@${BATS_VERSION} kubectl@${KUBECTL_VERSION} kustomize@5.6.0
+      - eval "$(mise activate bash --shims)"
+      - ./scripts/run-cilium-tests.sh
+
+  - name: Delete Kind Cluster
+    image: quay.io/sighup/mise:v2025.4.4
+    pull: always
+    network_mode: host
+    environment:
+      GITHUB_TOKEN:
+        from_secret: github_token
+    volumes:
+      - name: dockersock
+        path: /var/run/docker.sock
+      - name: mise-cache
+        path: /mise-data
+    depends_on:
+      - Run E2E Tests
+    when:
+      status:
+        - success
+        - failure
+    commands:
+      - mise use kind@${KIND_VERSION}
+      - eval "$(mise activate bash --shims)"
+      - ./scripts/cleanup-e2e-cluster.sh || true
+
 ---
-name: e2e-kubernetes-1.32-tigera-operator
+name: E2E Tests Tigera K8s 1.31
 kind: pipeline
 type: docker
-
-depends_on:
-  - e2e-kubernetes-1.31-tigera-operator
-
 platform:
   os: linux
   arch: amd64
-
+depends_on:
+  - Linting
+clone:
+  depth: 1
 trigger:
   ref:
     include:
       - refs/tags/**
 
-steps:
-  - name: create Kind cluster
-    image: quay.io/sighup/dind-kind-kubectl-kustomize:0.27.0_1.32.2_5.6.0
-    pull: always
-    volumes:
-      - name: dockersock
-        path: /var/run/docker.sock
-    environment:
-      CLUSTER_VERSION: v1.32.2
-      CLUSTER_NAME: ${DRONE_BUILD_NUMBER}-${DRONE_STAGE_NAME}
-      # /drone/src is the default workdir for the pipeline
-      # using this folder we don't need to mount another
-      # shared volume between the steps
-      KUBECONFIG: /drone/src/kubeconfig-${DRONE_STAGE_NAME}
-    commands:
-      # create a custom config to disable Kind's default CNI so
-      # we can test using KFD's networking module.
-      - |
-        cat <<EOF > kind-config.yaml
-        kind: Cluster
-        apiVersion: kind.x-k8s.io/v1alpha4
-        networking:
-          disableDefaultCNI: true
-        EOF
-      # NOTE: kind's `--wait` flag that waits for the control-plane ot be ready
-      # does not work when disabling the default CNI. It will always go in timeout.
-      - kind create cluster --name $${CLUSTER_NAME} --image registry.sighup.io/fury/kindest/node:$${CLUSTER_VERSION} --config kind-config.yaml
-      # save the kubeconfig so we can use it from other steps.
-      - kind get kubeconfig --name $${CLUSTER_NAME} > $${KUBECONFIG}
-
-  - name: e2e
-    image: quay.io/sighup/e2e-testing:2.24.17_1.1.0_3.12.0_1.32.2_5.6.0_4.33.3
-    pull: always
-    network_mode: host
-    environment:
-      CLUSTER_NAME: ${DRONE_BUILD_NUMBER}-${DRONE_STAGE_NAME}
-      KUBECONFIG: /drone/src/kubeconfig-${DRONE_STAGE_NAME}
-      FURYCTL_VERSION: v0.28.0
-    depends_on: [create Kind cluster]
-    commands:
-      - bats -t katalog/tests/calico/tigera.sh
-
-  - name: delete-kind-cluster
-    image: quay.io/sighup/dind-kind-kubectl-kustomize:0.27.0_1.32.2_5.6.0
-    volumes:
-      - name: dockersock
-        path: /var/run/docker.sock
-    environment:
-      CLUSTER_NAME: ${DRONE_BUILD_NUMBER}-${DRONE_STAGE_NAME}
-    commands:
-      # does not matter if the command fails
-      - kind delete cluster --name $${CLUSTER_NAME} || true
-    depends_on:
-      - e2e
-    when:
-      status:
-        - success
-        - failure
+environment:
+  # Mise configuration
+  MISE_DATA_DIR: "/mise-data"
+  KIND_VERSION: "0.29.0"
+  KUBECTL_VERSION: "1.31.1"
+  BATS_VERSION: "1.11.0"
+  CLUSTER_VERSION: v1.31.0
+  KUBECONFIG: kubeconfig-131-tigera
+  CLUSTER_NAME: ${DRONE_REPO_NAME}-${DRONE_BUILD_NUMBER}-131-tigera
 
 volumes:
   - name: dockersock
     host:
       path: /var/run/docker.sock
+  - name: mise-cache
+    host:
+      path: /root/mise_data_dir
+steps:
+  - name: Create Kind Cluster
+    image: quay.io/sighup/mise:v2025.4.4
+    pull: always
+    network_mode: host
+    environment:
+      GITHUB_TOKEN:
+        from_secret: github_token
+    volumes:
+      - name: dockersock
+        path: /var/run/docker.sock
+      - name: mise-cache
+        path: /mise-data
+    depends_on:
+      - clone
+    commands:
+      - mise use kind@${KIND_VERSION} kubectl@${KUBECTL_VERSION} kustomize@5.6.0
+      - eval "$(mise activate bash --shims)"
+      - ./scripts/create-e2e-cluster.sh tigera ${CLUSTER_VERSION#v}
+
+  - name: Run E2E Tests
+    image: quay.io/sighup/mise:v2025.4.4
+    pull: always
+    network_mode: host
+    environment:
+      GITHUB_TOKEN:
+        from_secret: github_token
+    volumes:
+      - name: mise-cache
+        path: /mise-data
+    depends_on:
+      - Create Kind Cluster
+    commands:
+      - mise use bats@${BATS_VERSION} kubectl@${KUBECTL_VERSION} kustomize@5.6.0
+      - eval "$(mise activate bash --shims)"
+      - ./scripts/run-tigera-tests.sh
+
+  - name: Delete Kind Cluster
+    image: quay.io/sighup/mise:v2025.4.4
+    pull: always
+    network_mode: host
+    environment:
+      GITHUB_TOKEN:
+        from_secret: github_token
+    volumes:
+      - name: dockersock
+        path: /var/run/docker.sock
+      - name: mise-cache
+        path: /mise-data
+    depends_on:
+      - Run E2E Tests
+    when:
+      status:
+        - success
+        - failure
+    commands:
+      - mise use kind@${KIND_VERSION}
+      - eval "$(mise activate bash --shims)"
+      - ./scripts/cleanup-e2e-cluster.sh || true
+
 ---
-name: e2e-kubernetes-1.29-cilium
+name: E2E Tests Tigera K8s 1.32
 kind: pipeline
 type: docker
-
-depends_on:
-  - policeman
-
 platform:
   os: linux
   arch: amd64
-
+depends_on:
+  - Linting
+clone:
+  depth: 1
 trigger:
   ref:
     include:
       - refs/tags/**
 
-steps:
-  - name: create Kind cluster
-    image: quay.io/sighup/dind-kind-kubectl-kustomize:0.20.0_1.29.1_3.10.0
-    pull: always
-    volumes:
-      - name: dockersock
-        path: /var/run/docker.sock
-    environment:
-      CLUSTER_VERSION: v1.29.8
-      CLUSTER_NAME: ${DRONE_BUILD_NUMBER}-${DRONE_STAGE_NAME}
-      # /drone/src is the default workdir for the pipeline
-      # using this folder we don't need to mount another
-      # shared volume between the steps
-      KUBECONFIG: /drone/src/kubeconfig-${DRONE_STAGE_NAME}
-    commands:
-      # create a custom config to disable Kind's default CNI so
-      # we can test using KFD's networking module.
-      - |
-        cat <<EOF > kind-config.yaml
-        kind: Cluster
-        apiVersion: kind.x-k8s.io/v1alpha4
-        networking:
-          disableDefaultCNI: true
-        nodes:
-        - role: control-plane
-        - role: worker
-        EOF
-      # NOTE: kind's `--wait` flag that waits for the control-plane ot be ready
-      # does not work when disabling the default CNI. It will always go in timeout.
-      - kind create cluster --name $${CLUSTER_NAME} --image registry.sighup.io/fury/kindest/node:$${CLUSTER_VERSION} --config kind-config.yaml
-      # save the kubeconfig so we can use it from other steps.
-      - kind get kubeconfig --name $${CLUSTER_NAME} > $${KUBECONFIG}
-
-  - name: e2e
-    image: quay.io/sighup/e2e-testing:2.24.17_1.1.0_3.12.0_1.32.2_5.6.0_4.33.3
-    pull: always
-    network_mode: host
-    environment:
-      CLUSTER_NAME: ${DRONE_BUILD_NUMBER}-${DRONE_STAGE_NAME}
-      KUBECONFIG: /drone/src/kubeconfig-${DRONE_STAGE_NAME}
-      FURYCTL_VERSION: v0.28.0
-    depends_on: [create Kind cluster]
-    commands:
-      - bats -t katalog/tests/cilium/cilium.sh
-
-  - name: delete-kind-cluster
-    image: quay.io/sighup/dind-kind-kubectl-kustomize:0.24.0_1.29.1_3.10.0
-    volumes:
-      - name: dockersock
-        path: /var/run/docker.sock
-    environment:
-      CLUSTER_NAME: ${DRONE_BUILD_NUMBER}-${DRONE_STAGE_NAME}
-    commands:
-      # does not matter if the command fails
-      - kind delete cluster --name $${CLUSTER_NAME} || true
-    depends_on:
-      - e2e
-    when:
-      status:
-        - success
-        - failure
+environment:
+  # Mise configuration
+  MISE_DATA_DIR: "/mise-data"
+  KIND_VERSION: "0.29.0"
+  KUBECTL_VERSION: "1.32.2"
+  BATS_VERSION: "1.11.0"
+  CLUSTER_VERSION: v1.32.2
+  KUBECONFIG: kubeconfig-132-tigera
+  CLUSTER_NAME: ${DRONE_REPO_NAME}-${DRONE_BUILD_NUMBER}-132-tigera
 
 volumes:
   - name: dockersock
     host:
       path: /var/run/docker.sock
+  - name: mise-cache
+    host:
+      path: /root/mise_data_dir
+steps:
+  - name: Create Kind Cluster
+    image: quay.io/sighup/mise:v2025.4.4
+    pull: always
+    network_mode: host
+    environment:
+      GITHUB_TOKEN:
+        from_secret: github_token
+    volumes:
+      - name: dockersock
+        path: /var/run/docker.sock
+      - name: mise-cache
+        path: /mise-data
+    depends_on:
+      - clone
+    commands:
+      - mise use kind@${KIND_VERSION} kubectl@${KUBECTL_VERSION} kustomize@5.6.0
+      - eval "$(mise activate bash --shims)"
+      - ./scripts/create-e2e-cluster.sh tigera ${CLUSTER_VERSION#v}
+
+  - name: Run E2E Tests
+    image: quay.io/sighup/mise:v2025.4.4
+    pull: always
+    network_mode: host
+    environment:
+      GITHUB_TOKEN:
+        from_secret: github_token
+    volumes:
+      - name: mise-cache
+        path: /mise-data
+    depends_on:
+      - Create Kind Cluster
+    commands:
+      - mise use bats@${BATS_VERSION} kubectl@${KUBECTL_VERSION} kustomize@5.6.0
+      - eval "$(mise activate bash --shims)"
+      - ./scripts/run-tigera-tests.sh
+
+  - name: Delete Kind Cluster
+    image: quay.io/sighup/mise:v2025.4.4
+    pull: always
+    network_mode: host
+    environment:
+      GITHUB_TOKEN:
+        from_secret: github_token
+    volumes:
+      - name: dockersock
+        path: /var/run/docker.sock
+      - name: mise-cache
+        path: /mise-data
+    depends_on:
+      - Run E2E Tests
+    when:
+      status:
+        - success
+        - failure
+    commands:
+      - mise use kind@${KIND_VERSION}
+      - eval "$(mise activate bash --shims)"
+      - ./scripts/cleanup-e2e-cluster.sh || true
+
 ---
-name: e2e-kubernetes-1.30-cilium
+name: E2E Tests Tigera K8s 1.33
 kind: pipeline
 type: docker
-
-depends_on:
-  - e2e-kubernetes-1.29-cilium
-
 platform:
   os: linux
   arch: amd64
-
+depends_on:
+  - Linting
+clone:
+  depth: 1
 trigger:
   ref:
     include:
       - refs/tags/**
 
-steps:
-  - name: create Kind cluster
-    image: quay.io/sighup/dind-kind-kubectl-kustomize:0.24.0_1.30.5_4.5.2
-    pull: always
-    volumes:
-      - name: dockersock
-        path: /var/run/docker.sock
-    environment:
-      CLUSTER_VERSION: v1.30.4
-      CLUSTER_NAME: ${DRONE_BUILD_NUMBER}-${DRONE_STAGE_NAME}
-      # /drone/src is the default workdir for the pipeline
-      # using this folder we don't need to mount another
-      # shared volume between the steps
-      KUBECONFIG: /drone/src/kubeconfig-${DRONE_STAGE_NAME}
-    commands:
-      # create a custom config to disable Kind's default CNI so
-      # we can test using KFD's networking module.
-      - |
-        cat <<EOF > kind-config.yaml
-        kind: Cluster
-        apiVersion: kind.x-k8s.io/v1alpha4
-        networking:
-          disableDefaultCNI: true
-        nodes:
-        - role: control-plane
-        - role: worker
-        EOF
-      # NOTE: kind's `--wait` flag that waits for the control-plane ot be ready
-      # does not work when disabling the default CNI. It will always go in timeout.
-      - kind create cluster --name $${CLUSTER_NAME} --image registry.sighup.io/fury/kindest/node:$${CLUSTER_VERSION} --config kind-config.yaml
-      # save the kubeconfig so we can use it from other steps.
-      - kind get kubeconfig --name $${CLUSTER_NAME} > $${KUBECONFIG}
-
-  - name: e2e
-    image: quay.io/sighup/e2e-testing:2.24.17_1.1.0_3.12.0_1.32.2_5.6.0_4.33.3
-    pull: always
-    network_mode: host
-    environment:
-      CLUSTER_NAME: ${DRONE_BUILD_NUMBER}-${DRONE_STAGE_NAME}
-      KUBECONFIG: /drone/src/kubeconfig-${DRONE_STAGE_NAME}
-      FURYCTL_VERSION: v0.28.0
-    depends_on: [create Kind cluster]
-    commands:
-      - bats -t katalog/tests/cilium/cilium.sh
-
-  - name: delete-kind-cluster
-    image: quay.io/sighup/dind-kind-kubectl-kustomize:0.24.0_1.30.5_4.5.2
-    volumes:
-      - name: dockersock
-        path: /var/run/docker.sock
-    environment:
-      CLUSTER_NAME: ${DRONE_BUILD_NUMBER}-${DRONE_STAGE_NAME}
-    commands:
-      # does not matter if the command fails
-      - kind delete cluster --name $${CLUSTER_NAME} || true
-    depends_on:
-      - e2e
-    when:
-      status:
-        - success
-        - failure
+environment:
+  # Mise configuration
+  MISE_DATA_DIR: "/mise-data"
+  KIND_VERSION: "0.29.0"
+  KUBECTL_VERSION: "1.33.4"
+  BATS_VERSION: "1.11.0"
+  CLUSTER_VERSION: v1.33.0
+  KUBECONFIG: kubeconfig-133-tigera
+  CLUSTER_NAME: ${DRONE_REPO_NAME}-${DRONE_BUILD_NUMBER}-133-tigera
 
 volumes:
   - name: dockersock
     host:
       path: /var/run/docker.sock
----
-name: e2e-kubernetes-1.31-cilium
-kind: pipeline
-type: docker
-
-depends_on:
-  - e2e-kubernetes-1.30-cilium
-
-platform:
-  os: linux
-  arch: amd64
-
-trigger:
-  ref:
-    include:
-      - refs/tags/**
-
+  - name: mise-cache
+    host:
+      path: /root/mise_data_dir
 steps:
-  - name: create Kind cluster
-    image: quay.io/sighup/dind-kind-kubectl-kustomize:0.24.0_1.31.1_4.5.2
-    pull: always
-    volumes:
-      - name: dockersock
-        path: /var/run/docker.sock
-    environment:
-      CLUSTER_VERSION: v1.31.1
-      CLUSTER_NAME: ${DRONE_BUILD_NUMBER}-${DRONE_STAGE_NAME}
-      # /drone/src is the default workdir for the pipeline
-      # using this folder we don't need to mount another
-      # shared volume between the steps
-      KUBECONFIG: /drone/src/kubeconfig-${DRONE_STAGE_NAME}
-    commands:
-      # create a custom config to disable Kind's default CNI so
-      # we can test using KFD's networking module.
-      - |
-        cat <<EOF > kind-config.yaml
-        kind: Cluster
-        apiVersion: kind.x-k8s.io/v1alpha4
-        networking:
-          disableDefaultCNI: true
-        nodes:
-        - role: control-plane
-        - role: worker
-        EOF
-      # NOTE: kind's `--wait` flag that waits for the control-plane ot be ready
-      # does not work when disabling the default CNI. It will always go in timeout.
-      - kind create cluster --name $${CLUSTER_NAME} --image registry.sighup.io/fury/kindest/node:$${CLUSTER_VERSION} --config kind-config.yaml
-      # save the kubeconfig so we can use it from other steps.
-      - kind get kubeconfig --name $${CLUSTER_NAME} > $${KUBECONFIG}
-
-  - name: e2e
-    image: quay.io/sighup/e2e-testing:2.24.17_1.1.0_3.12.0_1.32.2_5.6.0_4.33.3
+  - name: Create Kind Cluster
+    image: quay.io/sighup/mise:v2025.4.4
     pull: always
     network_mode: host
     environment:
-      CLUSTER_NAME: ${DRONE_BUILD_NUMBER}-${DRONE_STAGE_NAME}
-      KUBECONFIG: /drone/src/kubeconfig-${DRONE_STAGE_NAME}
-      FURYCTL_VERSION: v0.28.0
-    depends_on: [create Kind cluster]
-    commands:
-      - bats -t katalog/tests/cilium/cilium.sh
-
-  - name: delete-kind-cluster
-    image: quay.io/sighup/dind-kind-kubectl-kustomize:0.24.0_1.31.1_4.5.2
+      GITHUB_TOKEN:
+        from_secret: github_token
     volumes:
       - name: dockersock
         path: /var/run/docker.sock
-    environment:
-      CLUSTER_NAME: ${DRONE_BUILD_NUMBER}-${DRONE_STAGE_NAME}
-    commands:
-      # does not matter if the command fails
-      - kind delete cluster --name $${CLUSTER_NAME} || true
+      - name: mise-cache
+        path: /mise-data
     depends_on:
-      - e2e
+      - clone
+    commands:
+      - mise use kind@${KIND_VERSION} kubectl@${KUBECTL_VERSION} kustomize@5.6.0
+      - eval "$(mise activate bash --shims)"
+      - ./scripts/create-e2e-cluster.sh tigera ${CLUSTER_VERSION#v}
+
+  - name: Run E2E Tests
+    image: quay.io/sighup/mise:v2025.4.4
+    pull: always
+    network_mode: host
+    environment:
+      GITHUB_TOKEN:
+        from_secret: github_token
+    volumes:
+      - name: mise-cache
+        path: /mise-data
+    depends_on:
+      - Create Kind Cluster
+    commands:
+      - mise use bats@${BATS_VERSION} kubectl@${KUBECTL_VERSION} kustomize@5.6.0
+      - eval "$(mise activate bash --shims)"
+      - ./scripts/run-tigera-tests.sh
+
+  - name: Delete Kind Cluster
+    image: quay.io/sighup/mise:v2025.4.4
+    pull: always
+    network_mode: host
+    environment:
+      GITHUB_TOKEN:
+        from_secret: github_token
+    volumes:
+      - name: dockersock
+        path: /var/run/docker.sock
+      - name: mise-cache
+        path: /mise-data
+    depends_on:
+      - Run E2E Tests
     when:
       status:
         - success
         - failure
-
-volumes:
-  - name: dockersock
-    host:
-      path: /var/run/docker.sock
----
-name: e2e-kubernetes-1.32-cilium
-kind: pipeline
-type: docker
-
-depends_on:
-  - e2e-kubernetes-1.31-cilium
-
-platform:
-  os: linux
-  arch: amd64
-
-trigger:
-  ref:
-    include:
-      - refs/tags/**
-
-steps:
-  - name: create Kind cluster
-    image: quay.io/sighup/dind-kind-kubectl-kustomize:0.27.0_1.32.2_5.6.0
-    pull: always
-    volumes:
-      - name: dockersock
-        path: /var/run/docker.sock
-    environment:
-      CLUSTER_VERSION: v1.32.2
-      CLUSTER_NAME: ${DRONE_BUILD_NUMBER}-${DRONE_STAGE_NAME}
-      # /drone/src is the default workdir for the pipeline
-      # using this folder we don't need to mount another
-      # shared volume between the steps
-      KUBECONFIG: /drone/src/kubeconfig-${DRONE_STAGE_NAME}
     commands:
-      # create a custom config to disable Kind's default CNI so
-      # we can test using KFD's networking module.
-      - |
-        cat <<EOF > kind-config.yaml
-        kind: Cluster
-        apiVersion: kind.x-k8s.io/v1alpha4
-        networking:
-          disableDefaultCNI: true
-        nodes:
-        - role: control-plane
-        - role: worker
-        EOF
-      # NOTE: kind's `--wait` flag that waits for the control-plane ot be ready
-      # does not work when disabling the default CNI. It will always go in timeout.
-      - kind create cluster --name $${CLUSTER_NAME} --image registry.sighup.io/fury/kindest/node:$${CLUSTER_VERSION} --config kind-config.yaml
-      # save the kubeconfig so we can use it from other steps.
-      - kind get kubeconfig --name $${CLUSTER_NAME} > $${KUBECONFIG}
-
-  - name: e2e
-    image: quay.io/sighup/e2e-testing:2.24.17_1.1.0_3.12.0_1.32.2_5.6.0_4.33.3
-    pull: always
-    network_mode: host
-    environment:
-      CLUSTER_NAME: ${DRONE_BUILD_NUMBER}-${DRONE_STAGE_NAME}
-      KUBECONFIG: /drone/src/kubeconfig-${DRONE_STAGE_NAME}
-      FURYCTL_VERSION: v0.28.0
-    depends_on: [create Kind cluster]
-    commands:
-      - bats -t katalog/tests/cilium/cilium.sh
-
-  - name: delete-kind-cluster
-    image: quay.io/sighup/dind-kind-kubectl-kustomize:0.27.0_1.32.2_5.6.0
-    volumes:
-      - name: dockersock
-        path: /var/run/docker.sock
-    environment:
-      CLUSTER_NAME: ${DRONE_BUILD_NUMBER}-${DRONE_STAGE_NAME}
-    commands:
-      # does not matter if the command fails
-      - kind delete cluster --name $${CLUSTER_NAME} || true
-    depends_on:
-      - e2e
-    when:
-      status:
-        - success
-        - failure
-
-volumes:
-  - name: dockersock
-    host:
-      path: /var/run/docker.sock
+      - mise use kind@${KIND_VERSION}
+      - eval "$(mise activate bash --shims)"
+      - ./scripts/cleanup-e2e-cluster.sh || true
 ---
 name: release
 kind: pipeline
 type: docker
-
+node:
+  performance: low
+clone:
+  depth: 1
 depends_on:
-  - e2e-kubernetes-1.29-tigera-operator
-  - e2e-kubernetes-1.30-tigera-operator
-  - e2e-kubernetes-1.31-tigera-operator
-  - e2e-kubernetes-1.32-tigera-operator
-  - e2e-kubernetes-1.29-cilium
-  - e2e-kubernetes-1.30-cilium
-  - e2e-kubernetes-1.31-cilium
-  - e2e-kubernetes-1.32-cilium
-
+  - E2E Tests Cilium K8s 1.31
+  - E2E Tests Cilium K8s 1.32
+  - E2E Tests Cilium K8s 1.33
+  - E2E Tests Tigera K8s 1.31
+  - E2E Tests Tigera K8s 1.32
+  - E2E Tests Tigera K8s 1.33
 platform:
   os: linux
   arch: amd64
-
 trigger:
   ref:
     include:
       - refs/tags/**
-
+    exclude:
+      - refs/tags/e2e-**
 steps:
   - name: prepare-tar-gz
     image: alpine:latest
@@ -760,7 +676,7 @@ steps:
     when:
       ref:
         include:
-          - refs/tags/v**
+          - refs/tags/**
 
   - name: publish-prerelease
     image: plugins/github-release
