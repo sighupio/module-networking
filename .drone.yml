@@ -96,7 +96,7 @@ environment:
   KIND_VERSION: "0.29.0"
   KUBECTL_VERSION: "1.31.1"
   BATS_VERSION: "1.11.0"
-  CLUSTER_VERSION: 1.31.0
+  CLUSTER_VERSION: "1.31.0"
 
 volumes:
   - name: dockersock
@@ -187,7 +187,7 @@ environment:
   KIND_VERSION: "0.29.0"
   KUBECTL_VERSION: "1.32.2"
   BATS_VERSION: "1.11.0"
-  CLUSTER_VERSION: 1.32.2
+  CLUSTER_VERSION: "1.32.2"
 
 volumes:
   - name: dockersock
@@ -278,7 +278,7 @@ environment:
   KIND_VERSION: "0.29.0"
   KUBECTL_VERSION: "1.33.4"
   BATS_VERSION: "1.11.0"
-  CLUSTER_VERSION: 1.33.0
+  CLUSTER_VERSION: "1.33.0"
 
 volumes:
   - name: dockersock
@@ -369,7 +369,7 @@ environment:
   KIND_VERSION: "0.29.0"
   KUBECTL_VERSION: "1.31.1"
   BATS_VERSION: "1.11.0"
-  CLUSTER_VERSION: 1.31.0
+  CLUSTER_VERSION: "1.31.0"
 
 volumes:
   - name: dockersock
@@ -460,7 +460,7 @@ environment:
   KIND_VERSION: "0.29.0"
   KUBECTL_VERSION: "1.32.2"
   BATS_VERSION: "1.11.0"
-  CLUSTER_VERSION: 1.32.2
+  CLUSTER_VERSION: "1.32.2"
 
 volumes:
   - name: dockersock
@@ -551,7 +551,7 @@ environment:
   KIND_VERSION: "0.29.0"
   KUBECTL_VERSION: "1.33.4"
   BATS_VERSION: "1.11.0"
-  CLUSTER_VERSION: 1.33.0
+  CLUSTER_VERSION: "1.33.0"
 
 volumes:
   - name: dockersock
