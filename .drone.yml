@@ -96,9 +96,7 @@ environment:
   KIND_VERSION: "0.29.0"
   KUBECTL_VERSION: "1.31.1"
   BATS_VERSION: "1.11.0"
-  CLUSTER_VERSION: v1.31.0
-  KUBECONFIG: kubeconfig-131-cilium
-  CLUSTER_NAME: ${DRONE_REPO_NAME}-${DRONE_BUILD_NUMBER}-131-cilium
+  CLUSTER_VERSION: 1.31.0
 
 volumes:
   - name: dockersock
@@ -125,7 +123,7 @@ steps:
     commands:
       - mise use kind@${KIND_VERSION} kubectl@${KUBECTL_VERSION} kustomize@5.6.0
       - eval "$(mise activate bash --shims)"
-      - ./scripts/create-e2e-cluster.sh cilium ${CLUSTER_VERSION#v}
+      - ./scripts/create-e2e-cluster.sh cilium ${CLUSTER_VERSION}
 
   - name: Run E2E Tests
     image: quay.io/sighup/mise:v2025.4.4
@@ -189,9 +187,7 @@ environment:
   KIND_VERSION: "0.29.0"
   KUBECTL_VERSION: "1.32.2"
   BATS_VERSION: "1.11.0"
-  CLUSTER_VERSION: v1.32.2
-  KUBECONFIG: kubeconfig-132-cilium
-  CLUSTER_NAME: ${DRONE_REPO_NAME}-${DRONE_BUILD_NUMBER}-132-cilium
+  CLUSTER_VERSION: 1.32.2
 
 volumes:
   - name: dockersock
@@ -218,7 +214,7 @@ steps:
     commands:
       - mise use kind@${KIND_VERSION} kubectl@${KUBECTL_VERSION} kustomize@5.6.0
       - eval "$(mise activate bash --shims)"
-      - ./scripts/create-e2e-cluster.sh cilium ${CLUSTER_VERSION#v}
+      - ./scripts/create-e2e-cluster.sh cilium ${CLUSTER_VERSION}
 
   - name: Run E2E Tests
     image: quay.io/sighup/mise:v2025.4.4
@@ -282,9 +278,7 @@ environment:
   KIND_VERSION: "0.29.0"
   KUBECTL_VERSION: "1.33.4"
   BATS_VERSION: "1.11.0"
-  CLUSTER_VERSION: v1.33.0
-  KUBECONFIG: kubeconfig-133-cilium
-  CLUSTER_NAME: ${DRONE_REPO_NAME}-${DRONE_BUILD_NUMBER}-133-cilium
+  CLUSTER_VERSION: 1.33.0
 
 volumes:
   - name: dockersock
@@ -311,7 +305,7 @@ steps:
     commands:
       - mise use kind@${KIND_VERSION} kubectl@${KUBECTL_VERSION} kustomize@5.6.0
       - eval "$(mise activate bash --shims)"
-      - ./scripts/create-e2e-cluster.sh cilium ${CLUSTER_VERSION#v}
+      - ./scripts/create-e2e-cluster.sh cilium ${CLUSTER_VERSION}
 
   - name: Run E2E Tests
     image: quay.io/sighup/mise:v2025.4.4
@@ -375,9 +369,7 @@ environment:
   KIND_VERSION: "0.29.0"
   KUBECTL_VERSION: "1.31.1"
   BATS_VERSION: "1.11.0"
-  CLUSTER_VERSION: v1.31.0
-  KUBECONFIG: kubeconfig-131-tigera
-  CLUSTER_NAME: ${DRONE_REPO_NAME}-${DRONE_BUILD_NUMBER}-131-tigera
+  CLUSTER_VERSION: 1.31.0
 
 volumes:
   - name: dockersock
@@ -404,7 +396,7 @@ steps:
     commands:
       - mise use kind@${KIND_VERSION} kubectl@${KUBECTL_VERSION} kustomize@5.6.0
       - eval "$(mise activate bash --shims)"
-      - ./scripts/create-e2e-cluster.sh tigera ${CLUSTER_VERSION#v}
+      - ./scripts/create-e2e-cluster.sh tigera ${CLUSTER_VERSION}
 
   - name: Run E2E Tests
     image: quay.io/sighup/mise:v2025.4.4
@@ -468,9 +460,7 @@ environment:
   KIND_VERSION: "0.29.0"
   KUBECTL_VERSION: "1.32.2"
   BATS_VERSION: "1.11.0"
-  CLUSTER_VERSION: v1.32.2
-  KUBECONFIG: kubeconfig-132-tigera
-  CLUSTER_NAME: ${DRONE_REPO_NAME}-${DRONE_BUILD_NUMBER}-132-tigera
+  CLUSTER_VERSION: 1.32.2
 
 volumes:
   - name: dockersock
@@ -497,7 +487,7 @@ steps:
     commands:
       - mise use kind@${KIND_VERSION} kubectl@${KUBECTL_VERSION} kustomize@5.6.0
       - eval "$(mise activate bash --shims)"
-      - ./scripts/create-e2e-cluster.sh tigera ${CLUSTER_VERSION#v}
+      - ./scripts/create-e2e-cluster.sh tigera ${CLUSTER_VERSION}
 
   - name: Run E2E Tests
     image: quay.io/sighup/mise:v2025.4.4
@@ -561,9 +551,7 @@ environment:
   KIND_VERSION: "0.29.0"
   KUBECTL_VERSION: "1.33.4"
   BATS_VERSION: "1.11.0"
-  CLUSTER_VERSION: v1.33.0
-  KUBECONFIG: kubeconfig-133-tigera
-  CLUSTER_NAME: ${DRONE_REPO_NAME}-${DRONE_BUILD_NUMBER}-133-tigera
+  CLUSTER_VERSION: 1.33.0
 
 volumes:
   - name: dockersock
@@ -590,7 +578,7 @@ steps:
     commands:
       - mise use kind@${KIND_VERSION} kubectl@${KUBECTL_VERSION} kustomize@5.6.0
       - eval "$(mise activate bash --shims)"
-      - ./scripts/create-e2e-cluster.sh tigera ${CLUSTER_VERSION#v}
+      - ./scripts/create-e2e-cluster.sh tigera ${CLUSTER_VERSION}
 
   - name: Run E2E Tests
     image: quay.io/sighup/mise:v2025.4.4

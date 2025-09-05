@@ -51,16 +51,11 @@ fi
 
 echo "📦 Step 1: Creating Kind cluster with CNI disabled..."
 
-# Create kind config that disables default CNI
-KIND_CONFIG="kind-config-${CNI_TYPE}.yaml"
-cat > "${KIND_CONFIG}" <<EOF
-kind: Cluster
-apiVersion: kind.x-k8s.io/v1alpha4
-networking:
-  disableDefaultCNI: true
-EOF
+# Use static multi-node Kind config for realistic CNI testing
+KIND_CONFIG="katalog/tests/kind/config.yml"
 
 echo "   Using Kind node image: registry.sighup.io/fury/kindest/node:v${KUBE_VERSION}"
+echo "   Using multi-node config: ${KIND_CONFIG}"
 kind create cluster --name "${CLUSTER_NAME}" --image "registry.sighup.io/fury/kindest/node:v${KUBE_VERSION}" --config "${KIND_CONFIG}"
 
 echo "📋 Step 2: Setting up kubeconfig..."
@@ -93,5 +88,4 @@ echo "✅ E2E cluster created successfully!"
 echo "   Environment file: ${ENV_FILE}"
 echo "   Ready for ${CNI_TYPE} E2E testing"
 
-# Cleanup temporary config
-rm -f "${KIND_CONFIG}"
+# No cleanup needed - using static config file
