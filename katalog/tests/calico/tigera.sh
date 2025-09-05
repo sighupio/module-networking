@@ -29,9 +29,9 @@ load ./../helper
 # 
 @test "Install Tigera operator and calico operated" {
     info
-    show "Pre-creating calico-system namespace for kapp deployment..."
+    show "Creating calico-system namespace..."
     kubectl create namespace calico-system --dry-run=client -o yaml | kubectl apply -f -
-    show "Deploying Tigera operator using GitOps-style kapp deployment..."
+    show "Deploying Tigera operator..."
     test() {
         apply katalog/tigera/on-prem
     }

@@ -28,9 +28,9 @@ load ./../helper
 
 @test "Install Cilium core" {
     info
-    show "Pre-creating kube-system namespace for kapp deployment..."
+    show "Creating kube-system namespace..."
     kubectl create namespace kube-system --dry-run=client -o yaml | kubectl apply -f -
-    show "Deploying Cilium using GitOps-style kapp deployment..."
+    show "Deploying Cilium..."
     test() {
         apply katalog/cilium/core
     }
