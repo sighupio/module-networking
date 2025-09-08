@@ -15,12 +15,14 @@ spec:
   variant: Calico
   registry: registry.sighup.io/fury/
   # Configures Calico networking.
-  calicoNetwork:
-    # Explicitly set empty IPPools to prevent the operator from managing them.
-    # This prevents "IPPool needs to be deleted" errors when IPPools are created
-    # by cluster provisioners (kubeadm, etc.) or the Calico CNI itself.
-    # The Calico CNI will continue to work normally and manage networking.
-    ipPools: []
+  # calicoNetwork:
+    # # Note: The ipPools section cannot be modified post-install.
+    # ipPools:
+      # - blockSize: 26
+        # cidr: 192.168.0.0/16
+        # encapsulation: VXLANCrossSubnet
+        # natOutgoing: Enabled
+        # nodeSelector: all()
 
 # ---
 # By default we don't deploy the API Server. If you need it / want it you can deploy it by uncommenting the definition below.
