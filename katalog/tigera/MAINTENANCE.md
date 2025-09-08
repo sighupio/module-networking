@@ -11,7 +11,7 @@ To update the YAML file, run the following command:
 
 ```bash
 # assuming katalog/tigera is the root of the repository
-export CALICO_VERSION="3.30.0"
+export CALICO_VERSION="3.30.3"
 curl "https://raw.githubusercontent.com/projectcalico/calico/v${CALICO_VERSION}/manifests/tigera-operator.yaml" --output operator/tigera-operator.yaml
 
 # Update the CRDs.
@@ -39,7 +39,7 @@ To download the default configuration from upstream and update the file use the 
 
 ```bash
 # assuming katalog/tigera is the root of the repository
-export CALICO_VERSION="3.30.0"
+export CALICO_VERSION="3.30.3"
 curl https://raw.githubusercontent.com/projectcalico/calico/v${CALICO_VERSION}/manifests/custom-resources.yaml --output on-prem/custom-resources.yaml
 ```
 
@@ -61,7 +61,7 @@ To get the dashboards you can use the following commands:
 
 ```bash
 # ⚠️ Assuming $PWD == root of the project
-export CALICO_VERSION="3.30.0"
+export CALICO_VERSION="3.30.3"
 # we split the upstream file and store only the json files
 curl -L https://raw.githubusercontent.com/projectcalico/calico/v${CALICO_VERSION}/manifests/grafana-dashboards.yaml | yq '.data["felix-dashboard.json"]' | sed 's/calico-demo-prometheus/prometheus/g' | jq > ./on-prem/monitoring/dashboards/felix-dashboard.json
 curl -L https://raw.githubusercontent.com/projectcalico/calico/v${CALICO_VERSION}/manifests/grafana-dashboards.yaml | yq '.data["typha-dashboard.json"]' | sed 's/calico-demo-prometheus/prometheus/g' | jq > ./on-prem/monitoring/dashboards/typa-dashboard.json
