@@ -1365,7 +1365,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: cilium-operator
-        image: "registry.sighup.io/fury/cilium/operator-generic-generic:v1.18.1"
+        image: "registry.sighup.io/fury/cilium/operator-generic:v1.18.1"
         imagePullPolicy: IfNotPresent
         command:
         - cilium-operator-generic
