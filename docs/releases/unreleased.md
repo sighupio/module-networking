@@ -20,36 +20,12 @@ This release updates the Tigera Operator to version 1.38.6, which includes Calic
 
 ## Update Guide 🦮
 
-### Tigera Operator: update process
-1. Deploy CRDs first:
-```bash
-kubectl apply --server-side -f ./katalog/tigera/operator/operator-crds.yaml
-```
+### Process
 
-2. Build kustomize and apply:
-```bash
-kustomize build katalog/tigera/on-prem | kubectl apply --server-side -f -
-```
-
-### Post-upgrade verification
-Verify that all Calico components are running with the new version:
+1. Just deploy as usual:
 
 ```bash
-# Check tigera-operator
-kubectl get deployment tigera-operator -n tigera-operator -o jsonpath='{.spec.template.spec.containers[0].image}'
-
-# Check calico-node DaemonSet
-kubectl get daemonset calico-node -n calico-system -o jsonpath='{.spec.template.spec.containers[0].image}'
-
-# Check calico-kube-controllers
-kubectl get deployment calico-kube-controllers -n calico-system -o jsonpath='{.spec.template.spec.containers[0].image}'
-```
-
-## Upgrade path
-
-To upgrade this core module from `v2.2.x` to `v3.0.0`, you need to download this new version, then apply the `kustomize` project. No further action is required.
-
-```bash
-furyctl install --version v3.0.0
-kustomize build katalog/tigera/on-prem | kubectl apply --server-side -f -
+kustomize build katalog/tigera/on-prem | kubectl apply -f -
+# OR
+kustomize build katalog/cilium | kubectl apply -f -
 ```
