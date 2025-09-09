@@ -1,0 +1,16 @@
+# Copyright (c) 2017-present SIGHUP s.r.l All rights reserved.
+# Use of this source code is governed by a BSD-style
+# license that can be found in the LICENSE file.
+
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+networking:
+  disableDefaultCNI: true  # Essential: Let CNI modules (Tigera/Cilium) handle networking
+# Multi-node cluster for realistic CNI testing
+# - Tests inter-node pod communication
+# - Tests network policies spanning multiple nodes
+# - Tests CNI cross-node functionality
+nodes:
+- role: control-plane
+- role: worker
+- role: worker

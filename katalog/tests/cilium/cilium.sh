@@ -16,39 +16,54 @@ load ./../helper
     [ "$status" -eq 0 ]
 }
 
-@test "Install Cilium core" {
+@test "Install Prerequisites" {
     info
     install() {
-        kubectl apply -f 'https://raw.githubusercontent.com/sighupio/fury-kubernetes-monitoring/v2.1.0/katalog/prometheus-operator/crds/0servicemonitorCustomResourceDefinition.yaml'
-        kubectl apply -f 'https://raw.githubusercontent.com/sighupio/fury-kubernetes-monitoring/v2.1.0/katalog/prometheus-operator/crds/0prometheusruleCustomResourceDefinition.yaml'
-        apply katalog/cilium/core
+        kubectl apply -f 'https://raw.githubusercontent.com/sighupio/module-monitoring/v3.1.0/katalog/prometheus-operator/crds/0servicemonitorCustomResourceDefinition.yaml'
+        kubectl apply -f 'https://raw.githubusercontent.com/sighupio/module-monitoring/v3.1.0/katalog/prometheus-operator/crds/0prometheusruleCustomResourceDefinition.yaml'
     }
     run install
     [ "$status" -eq 0 ]
 }
 
-@test "Cilium Operator is Running" {
+@test "Install Cilium core" {
     info
+    show "Creating kube-system namespace..."
+    kubectl create namespace kube-system --dry-run=client -o yaml | kubectl apply -f -
+    show "Deploying Cilium..."
     test() {
-        kubectl get pods -l name=cilium-operator -o json -n kube-system |jq '.items[].status.containerStatuses[].ready' | uniq | grep -q true
+        apply katalog/cilium/core
     }
     loop_it test 60 5
     status=${loop_it_result}
     [ "$status" -eq 0 ]
 }
 
-@test "Cilium is Running" {
+@test "Cilium Operator Deployment is Ready" {
     info
+    show "Waiting for cilium-operator deployment to be fully ready..."
     test() {
-        kubectl get pods -l k8s-app=cilium -o json -n kube-system |jq '.items[].status.containerStatuses[].ready' | uniq | grep -q true
+        check_deploy_ready "cilium-operator" "kube-system"
     }
     loop_it test 60 5
     status=${loop_it_result}
     [ "$status" -eq 0 ]
 }
 
-@test "Nodes in ready State" {
+@test "Cilium DaemonSet is Ready" {
     info
+    show "Waiting for cilium daemonset to be ready on all nodes..."
+    test() {
+        check_ds_ready "cilium" "kube-system"
+    }
+    loop_it test 60 5
+    status=${loop_it_result}
+    [ "$status" -eq 0 ]
+}
+
+@test "Nodes in Ready State" {
+    info
+    show "Verifying all nodes are in Ready state..."
     test() {
         kubectl get nodes --no-headers | awk  '{print $2}' | uniq | grep -q Ready
     }
