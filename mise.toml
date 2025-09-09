@@ -14,6 +14,7 @@ dyff = "1.9.0"
 drone = "1.9.0"
 kapp = "0.64.2"     # For GitOps-style deployments
 "ubi:google/addlicense" = "v1.1.1"     
+stern = "1.33.0"
 
 # Development task definitions
 [tasks.add-license]

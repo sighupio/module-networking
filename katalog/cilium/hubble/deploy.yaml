@@ -262,7 +262,7 @@ spec:
             runAsGroup: 65532
             runAsNonRoot: true
             runAsUser: 65532
-          image: "registry.sighup.io/fury/cilium/hubble-relay:v1.17.2"
+          image: "registry.sighup.io/fury/cilium/hubble-relay:v1.18.1"
           imagePullPolicy: IfNotPresent
           command:
             - hubble-relay
@@ -386,7 +386,7 @@ spec:
       automountServiceAccountToken: true
       containers:
       - name: frontend
-        image: "registry.sighup.io/fury/cilium/hubble-ui:v0.13.2"
+        image: "registry.sighup.io/fury/cilium/hubble-ui:v0.13.3"
         imagePullPolicy: IfNotPresent
         ports:
         - name: http
@@ -407,7 +407,7 @@ spec:
           mountPath: /tmp
         terminationMessagePolicy: FallbackToLogsOnError
       - name: backend
-        image: "registry.sighup.io/fury/cilium/hubble-ui-backend:v0.13.2"
+        image: "registry.sighup.io/fury/cilium/hubble-ui-backend:v0.13.3"
         imagePullPolicy: IfNotPresent
         env:
         - name: EVENTS_SERVER_PORT

@@ -11,10 +11,6 @@ resources:
   - monitoring
   - resources/pki.yaml
 
-patchesStrategicMerge:
-  - patches/cilium.yaml
-  - patches/service.yaml
-
 configMapGenerator:
   - name: cilium-config
     behavior: merge
