@@ -55,6 +55,17 @@ helm pull cilium/cilium --version 1.18.1 --untar --untardir /tmp
 
 ## 2. Updating the core package
 
+> ⚠️ **CRITICAL WARNING**: Never include "-generic" in the operator repository name!  
+> Helm automatically appends "-generic" suffix based on cloud provider detection (defaults to "generic").  
+> 
+> **CORRECT**: `registry.sighup.io/fury/cilium/operator`  
+> **WRONG**: `registry.sighup.io/fury/cilium/operator-generic`  
+> 
+> The Helm template at `templates/cilium-operator/_helpers.tpl` line 35 constructs the image as:  
+> `printf "%s-%s%s%s%s" repository cloud suffix tag imageDigest`  
+> 
+> Using `operator-generic` results in: `operator-generic-generic:v1.18.1` which causes ImagePullBackOff!
+
 2.1. Render the manifests from the upstream Chart
 
 ```bash

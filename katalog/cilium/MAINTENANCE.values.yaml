@@ -270,7 +270,12 @@ operator:
   # -- cilium-operator image.
   image:
     override: ~
-    repository: "registry.sighup.io/fury/cilium/operator-generic"
+    # IMPORTANT: Do NOT include "-generic" in repository name!
+    # Helm template automatically appends cloud suffix (defaults to "generic")
+    # See templates/cilium-operator/_helpers.tpl line 35 for logic:
+    # printf "%s-%s%s%s%s" .Values.operator.image.repository $cloud .Values.operator.image.suffix $tag $imageDigest
+    # Result: registry.sighup.io/fury/cilium/operator-generic:v1.18.1
+    repository: "registry.sighup.io/fury/cilium/operator"
     tag: "v1.18.1"
 
     useDigest: false
