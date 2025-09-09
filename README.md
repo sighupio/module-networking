@@ -33,7 +33,7 @@ Networking Module provides the following packages:
 
 | Package                    | Version  | Description                                                                                                                                          |
 | -------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [cilium](katalog/cilium)   | `1.17.2` | [Cilium][cilium-page] CNI Plugin. For cluster with `< 200` nodes.                                                                                    |
+| [cilium](katalog/cilium)   | `1.18.1` | [Cilium][cilium-page] CNI Plugin. For cluster with `< 200` nodes.                                                                                    |
 | [tigera](katalog/tigera)   | `1.38.6` | [Tigera Operator][tigera-page], a Kubernetes Operator for Calico, provides pre-configured installations for on-prem and for EKS in policy-only mode. |
 | [ip-masq](katalog/ip-masq) | `2.8.0`  | The `ip-masq-agent` configures iptables rules to implement IP masquerading functionality                                                             |
 

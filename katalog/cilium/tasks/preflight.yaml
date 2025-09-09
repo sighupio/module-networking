@@ -167,7 +167,7 @@ spec:
             topologyKey: kubernetes.io/hostname
       initContainers:
         - name: clean-cilium-state
-          image: "registry.sighup.io/fury/cilium/cilium:v1.15.2"
+          image: "registry.sighup.io/fury/cilium/cilium:v1.18.1"
           imagePullPolicy: IfNotPresent
           command: ["/bin/echo"]
           args:
@@ -175,7 +175,7 @@ spec:
           terminationMessagePolicy: FallbackToLogsOnError
       containers:
         - name: cilium-pre-flight-check
-          image: "registry.sighup.io/fury/cilium/cilium:v1.15.2"
+          image: "registry.sighup.io/fury/cilium/cilium:v1.18.1"
           imagePullPolicy: IfNotPresent
           command: ["/bin/sh"]
           args:
@@ -265,7 +265,7 @@ spec:
     spec:
       containers:
         - name: cnp-validator
-          image: "qregistry.sighup.io/fury/cilium/cilium:v1.15.2"
+          image: "registry.sighup.io/fury/cilium/cilium:v1.18.1"
           imagePullPolicy: IfNotPresent
           command: ["/bin/sh"]
           args:

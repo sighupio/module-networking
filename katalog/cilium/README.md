@@ -63,6 +63,25 @@ cluster-pool-ipv4-mask-size=24
 
 > :info: The CIDR used by Cilium can be different than the one used by Kubeadm.
 
+## Architecture and Customizations
+
+The Cilium package includes two main variants:
+
+### Core Package (`core/`)
+- Base Cilium CNI installation
+- Cilium operator for managing network policies
+- ServiceMonitors for Prometheus integration
+
+### Hubble Package (`hubble/`)
+- Includes everything from core
+- Adds Hubble observability components (relay, UI)
+- **Minimal customizations** as of v1.18.1:
+  - **Grafana dashboard** - Custom dashboard for network metrics visualization
+  - **cert-manager Issuer** - Required for TLS certificate generation
+  - **Hubble configuration** - Additional settings via ConfigMapGenerator
+
+> **Note**: Starting from v1.18.1, upstream Cilium has resolved many issues we previously patched. The package now requires no custom patches and only adds essential monitoring and PKI resources.
+
 ## Deployment
 
 You can deploy Cilium by running the following command in the root of this package:
