@@ -9,14 +9,13 @@ This release updates both the Tigera Operator to version 1.38.6 (Calico v3.30.3)
 | Component         | Supported Version                                                                | Previous Version |
 | ----------------- | -------------------------------------------------------------------------------- | ---------------- |
 | `cilium`          | [`v1.18.1`](https://github.com/cilium/cilium/releases/tag/v1.18.1)               | v1.17.2          |
-| `ip-masq`         | [`v2.8.0`](https://github.com/kubernetes-sigs/ip-masq-agent/releases/tag/v2.8.0) | No update        |
 | `tigera-operator` | [`v1.38.6`](https://github.com/tigera/operator/releases/tag/v1.38.6)             | v1.38.0          |
 
 > Please refer the individual release notes to get detailed information on each release.
 
 ## Breaking Changes 💔
 
-- None
+- **REMOVED**: `ip-masq` package has been completely removed from the module. Users requiring IP masquerading functionality should implement their own solution or use CNI-native features.
 
 ## Update Guide 🦮
 
