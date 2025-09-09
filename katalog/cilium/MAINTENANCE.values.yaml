@@ -7,7 +7,7 @@
 image:
   override: ~
   repository: "registry.sighup.io/fury/cilium/cilium"
-  tag: "v1.17.2"
+  tag: "v1.18.1"
   useDigest: false
 
 # -- Affinity for cilium-agent.
@@ -76,7 +76,7 @@ hubble:
     image:
       override: ~
       repository: "registry.sighup.io/fury/cilium/hubble-relay"
-      tag: "v1.17.2"
+      tag: "v1.18.1"
 
       useDigest: false
       pullPolicy: "IfNotPresent"
@@ -120,7 +120,7 @@ hubble:
       image:
         override: ~
         repository: "registry.sighup.io/fury/cilium/hubble-ui-backend"
-        tag: "v0.13.2"
+        tag: "v0.13.3"
 
         useDigest: false
         pullPolicy: "IfNotPresent"
@@ -138,7 +138,7 @@ hubble:
       image:
         override: ~
         repository: "registry.sighup.io/fury/cilium/hubble-ui"
-        tag: "v0.13.2"
+        tag: "v0.13.3"
         useDigest: false
         pullPolicy: "IfNotPresent"
 
@@ -270,8 +270,13 @@ operator:
   # -- cilium-operator image.
   image:
     override: ~
+    # IMPORTANT: Do NOT include "-generic" in repository name!
+    # Helm template automatically appends cloud suffix (defaults to "generic")
+    # See templates/cilium-operator/_helpers.tpl line 35 for logic:
+    # printf "%s-%s%s%s%s" .Values.operator.image.repository $cloud .Values.operator.image.suffix $tag $imageDigest
+    # Result: registry.sighup.io/fury/cilium/operator-generic:v1.18.1
     repository: "registry.sighup.io/fury/cilium/operator"
-    tag: "v1.17.2"
+    tag: "v1.18.1"
 
     useDigest: false
     pullPolicy: "IfNotPresent"

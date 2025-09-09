@@ -2,13 +2,13 @@
 
 Welcome to the latest release of the `Networking` module of [`SIGHUP Distribution`](https://github.com/sighupio/distribution) maintained by team SIGHUP by ReeVo.
 
-This release updates the Tigera Operator to version 1.38.6, which includes Calico v3.30.3 with official Kubernetes 1.33 support, enhanced GatewayAPI features, and improved testing infrastructure.
+This release updates both the Tigera Operator to version 1.38.6 (Calico v3.30.3) and Cilium to version 1.18.1, providing enhanced networking capabilities, official Kubernetes 1.33 support, improved GatewayAPI features, and robust testing infrastructure.
 
 ## Component Images 🚢
 
 | Component         | Supported Version                                                                | Previous Version |
 | ----------------- | -------------------------------------------------------------------------------- | ---------------- |
-| `cilium`          | [`v1.17.2`](https://github.com/cilium/cilium/releases/tag/v1.17.2)               | No update        |
+| `cilium`          | [`v1.18.1`](https://github.com/cilium/cilium/releases/tag/v1.18.1)               | v1.17.2          |
 | `ip-masq`         | [`v2.8.0`](https://github.com/kubernetes-sigs/ip-masq-agent/releases/tag/v2.8.0) | No update        |
 | `tigera-operator` | [`v1.38.6`](https://github.com/tigera/operator/releases/tag/v1.38.6)             | v1.38.0          |
 
