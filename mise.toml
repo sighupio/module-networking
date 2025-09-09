@@ -32,7 +32,6 @@ echo "🔍 Validating manifest builds..."
 kustomize build katalog/cilium > /dev/null && echo "  ✅ cilium"
 kustomize build katalog/tigera/on-prem > /dev/null && echo "  ✅ tigera/on-prem"
 kustomize build katalog/tigera/policy-only > /dev/null && echo "  ✅ tigera/policy-only"
-kustomize build katalog/ip-masq > /dev/null && echo "  ✅ ip-masq"
 echo "✅ All manifests validated!"
 '''
 
