@@ -3,7 +3,6 @@
 # license that can be found in the LICENSE file.
 
 ---
-
 image:
   override: ~
   repository: "registry.sighup.io/fury/cilium/cilium"
@@ -53,6 +52,8 @@ hubble:
         name: hubble-issuer
 
   metrics:
+    tls:
+      enabled: true
     enableOpenMetrics: true
     serviceMonitor:
       enabled: true
@@ -155,9 +156,6 @@ hubble:
         ipv6:
           enabled: true
 
-
-
-
 # -- Method to use for identity allocation (`crd` or `kvstore`).
 identityAllocationMode: "crd"
 
@@ -227,7 +225,6 @@ localRedirectPolicy: false
 # -- Enables periodic logging of system load
 logSystemLoad: false
 
-
 # -- Configure prometheus metrics on the configured port at /metrics
 prometheus:
   metricsService: true
@@ -292,7 +289,6 @@ operator:
       # -- Enable service monitors.
       # This requires the prometheus CRDs to be available (see https://github.com/prometheus-operator/prometheus-operator/blob/master/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml)
       enabled: true
-
 
 nodeinit:
   # -- Enable the node initialization DaemonSet

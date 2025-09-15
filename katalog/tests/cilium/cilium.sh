@@ -70,3 +70,48 @@ load ./../helper
     run test
     [ "$status" -eq 0 ]
 }
+
+@test "Install cert-manager (needed for Hubble)" {
+    info
+    show "Deploying cert-manager..."
+    test() {
+        apply https://github.com/sighupio/module-ingress/katalog/cert-manager?ref=v4.1.0-rc.0 cert-manager
+    }
+    loop_it test 60 5
+    status=${loop_it_result}
+    [ "$status" -eq 0 ]
+}
+
+@test "cert-manager-webhook is Ready" {
+    info
+    show "Waiting for cert-manager-webhook deployments to be fully ready..."
+    test() {
+        check_deploy_ready "cert-manager-webhook" "cert-manager"
+    }
+    loop_it test 60 5
+    status=${loop_it_result}
+    [ "$status" -eq 0 ]
+}
+
+@test "Install Hubble" {
+    info
+    show "Deploying Cilium + Hubble..."
+    test() {
+        apply katalog/cilium/hubble core # reuse same app name
+    }
+    loop_it test 60 5
+    status=${loop_it_result}
+    [ "$status" -eq 0 ]
+}
+
+@test "Hubble is Ready" {
+    info
+    show "Waiting for Hubble deployments to be fully ready..."
+    test() {
+        check_deploy_ready "hubble-relay" "kube-system"
+        check_deploy_ready "hubble-ui" "kube-system"
+    }
+    loop_it test 60 5
+    status=${loop_it_result}
+    [ "$status" -eq 0 ]
+}
