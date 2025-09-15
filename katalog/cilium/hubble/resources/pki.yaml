@@ -32,5 +32,3 @@ spec:
     name: self-signed-cilium
     kind: Issuer
   commonName: "cilium-ca"
----
-

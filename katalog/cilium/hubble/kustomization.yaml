@@ -17,3 +17,6 @@ configMapGenerator:
     namespace: kube-system
     envs:
       - config/hubble.env
+
+patches:
+  - path: patches/cilium.yaml
