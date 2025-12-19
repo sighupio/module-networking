@@ -3,8 +3,8 @@
 # license that can be found in the LICENSE file.
 
 [tools]
-kind = "0.29.0"    
-kubectl = "1.33.4"  # Latest stable for local development
+kind = "0.31.0"    
+kubectl = "1.34.2"  # Latest stable for local development
 kustomize = "5.6.0"
 helm = "3.15.0"    
 yq = "4.43.1"      
@@ -45,24 +45,24 @@ echo "✅ Development environment ready!"
 '''
 
 [tasks.e2e-tigera]
-description = "Run Tigera E2E test suite with Kind cluster (K8s 1.33)"
+description = "Run Tigera E2E test suite with Kind cluster (K8s 1.34)"
 run = '''
 #!/bin/bash
 set -e
 echo "🚀 Running Tigera E2E workflow..."
-./scripts/create-e2e-cluster.sh tigera 1.33.0
+./scripts/create-e2e-cluster.sh tigera 1.34.0
 ./scripts/run-tigera-tests.sh
 ./scripts/cleanup-e2e-cluster.sh tigera
 echo "✅ Tigera E2E workflow completed!"
 '''
 
 [tasks.e2e-cilium]
-description = "Run Cilium E2E test suite with Kind cluster (K8s 1.33)"
+description = "Run Cilium E2E test suite with Kind cluster (K8s 1.34)"
 run = '''
 #!/bin/bash
 set -e
 echo "🚀 Running Cilium E2E workflow..."
-./scripts/create-e2e-cluster.sh cilium 1.33.0
+./scripts/create-e2e-cluster.sh cilium 1.34.0
 ./scripts/run-cilium-tests.sh
 ./scripts/cleanup-e2e-cluster.sh cilium
 echo "✅ Cilium E2E workflow completed!"
@@ -71,11 +71,11 @@ echo "✅ Cilium E2E workflow completed!"
 # Individual E2E workflow components (following module-auth pattern)
 [tasks.e2e-create-cluster-tigera]
 description = "Create Kind cluster for Tigera E2E testing"
-run = "./scripts/create-e2e-cluster.sh tigera 1.33.0"
+run = "./scripts/create-e2e-cluster.sh tigera 1.34.0"
 
 [tasks.e2e-create-cluster-cilium]
 description = "Create Kind cluster for Cilium E2E testing"
-run = "./scripts/create-e2e-cluster.sh cilium 1.33.0"
+run = "./scripts/create-e2e-cluster.sh cilium 1.34.0"
 
 [tasks.e2e-run-tests-tigera]
 description = "Run Tigera E2E tests on existing cluster"
