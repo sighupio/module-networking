@@ -22,27 +22,27 @@ spec:
     spec:
       containers:
         - name: image1
-          image: registry.sighup.io/fury/calico/kube-controllers:v3.30.3
+          image: registry.sighup.io/fury/calico/kube-controllers:v3.31.2
         - name: image2
-          image: registry.sighup.io/fury/calico/cni:v3.30.3
+          image: registry.sighup.io/fury/calico/cni:v3.31.2
         - name: image3
-          image: registry.sighup.io/fury/calico/pod2daemon-flexvol:v3.30.3
+          image: registry.sighup.io/fury/calico/pod2daemon-flexvol:v3.31.2
         - name: image4
-          image: registry.sighup.io/fury/calico/node:v3.30.3
+          image: registry.sighup.io/fury/calico/node:v3.31.2
         - name: image5
-          image: registry.sighup.io/fury/calico/apiserver:v3.30.3
+          image: registry.sighup.io/fury/calico/apiserver:v3.31.2
         - name: image6
-          image: registry.sighup.io/fury/calico/typha:v3.30.3
+          image: registry.sighup.io/fury/calico/typha:v3.31.2
         - name: image7
-          image: registry.sighup.io/fury/calico/csi:v3.30.3
+          image: registry.sighup.io/fury/calico/csi:v3.31.2
         - name: image8
-          image: registry.sighup.io/fury/calico/node-driver-registrar:v3.30.3
+          image: registry.sighup.io/fury/calico/node-driver-registrar:v3.31.2
         - name: image9
-          image: registry.sighup.io/fury/calico/dikastes:v3.30.3
+          image: registry.sighup.io/fury/calico/dikastes:v3.31.2
         - name: image10
-          image: registry.sighup.io/fury/calico/goldmane:v3.30.3
+          image: registry.sighup.io/fury/calico/goldmane:v3.31.2
         - name: image11
-          image: registry.sighup.io/fury/calico/whisker:v3.30.3
+          image: registry.sighup.io/fury/calico/whisker:v3.31.2
         - name: image12
-          image: registry.sighup.io/fury/calico/whisker-backend:v3.30.3
+          image: registry.sighup.io/fury/calico/whisker-backend:v3.31.2
           
