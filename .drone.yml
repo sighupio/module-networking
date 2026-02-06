@@ -75,97 +75,6 @@ steps:
       KUBERNETES_MANIFESTS: tigera-on-prem.yml
 
 ---
-name: E2E Tests Cilium K8s 1.31
-kind: pipeline
-type: docker
-platform:
-  os: linux
-  arch: amd64
-depends_on:
-  - Linting
-clone:
-  depth: 1
-trigger:
-  ref:
-    include:
-      - refs/tags/**
-
-environment:
-  # Mise configuration
-  MISE_DATA_DIR: "/mise-data"
-  KIND_VERSION: "0.29.0"
-  KUBECTL_VERSION: "1.31.1"
-  BATS_VERSION: "1.11.0"
-  CLUSTER_VERSION: "1.31.0"
-
-volumes:
-  - name: dockersock
-    host:
-      path: /var/run/docker.sock
-  - name: mise-cache
-    host:
-      path: /root/mise_data_dir
-steps:
-  - name: Create Kind Cluster
-    image: quay.io/sighup/mise:v2025.4.4
-    pull: always
-    network_mode: host
-    environment:
-      GITHUB_TOKEN:
-        from_secret: github_token
-    volumes:
-      - name: dockersock
-        path: /var/run/docker.sock
-      - name: mise-cache
-        path: /mise-data
-    depends_on:
-      - clone
-    commands:
-      - mise use kind@$${KIND_VERSION} kubectl@$${KUBECTL_VERSION} kustomize@5.6.0
-      - eval "$(mise activate bash --shims)"
-      - ./scripts/create-e2e-cluster.sh cilium $${CLUSTER_VERSION}
-
-  - name: Run E2E Tests
-    image: quay.io/sighup/mise:v2025.4.4
-    pull: always
-    network_mode: host
-    environment:
-      GITHUB_TOKEN:
-        from_secret: github_token
-    volumes:
-      - name: mise-cache
-        path: /mise-data
-    depends_on:
-      - Create Kind Cluster
-    commands:
-      - mise use bats@$${BATS_VERSION} kubectl@$${KUBECTL_VERSION} kustomize@5.6.0
-      - eval "$(mise activate bash --shims)"
-      - ./scripts/run-cilium-tests.sh
-
-  - name: Delete Kind Cluster
-    image: quay.io/sighup/mise:v2025.4.4
-    pull: always
-    network_mode: host
-    environment:
-      GITHUB_TOKEN:
-        from_secret: github_token
-    volumes:
-      - name: dockersock
-        path: /var/run/docker.sock
-      - name: mise-cache
-        path: /mise-data
-    depends_on:
-      - Run E2E Tests
-    when:
-      status:
-        - success
-        - failure
-    commands:
-      - mise use kind@$${KIND_VERSION}
-      - eval "$(mise activate bash --shims)"
-      - ./scripts/cleanup-e2e-cluster.sh || true
-
----
 name: E2E Tests Cilium K8s 1.32
 kind: pipeline
 type: docker
@@ -323,97 +232,6 @@ steps:
       - mise use bats@$${BATS_VERSION} kubectl@$${KUBECTL_VERSION} kustomize@5.6.0
       - eval "$(mise activate bash --shims)"
       - ./scripts/run-cilium-tests.sh
-
-  - name: Delete Kind Cluster
-    image: quay.io/sighup/mise:v2025.4.4
-    pull: always
-    network_mode: host
-    environment:
-      GITHUB_TOKEN:
-        from_secret: github_token
-    volumes:
-      - name: dockersock
-        path: /var/run/docker.sock
-      - name: mise-cache
-        path: /mise-data
-    depends_on:
-      - Run E2E Tests
-    when:
-      status:
-        - success
-        - failure
-    commands:
-      - mise use kind@$${KIND_VERSION}
-      - eval "$(mise activate bash --shims)"
-      - ./scripts/cleanup-e2e-cluster.sh || true
-
----
-name: E2E Tests Tigera K8s 1.31
-kind: pipeline
-type: docker
-platform:
-  os: linux
-  arch: amd64
-depends_on:
-  - Linting
-clone:
-  depth: 1
-trigger:
-  ref:
-    include:
-      - refs/tags/**
-
-environment:
-  # Mise configuration
-  MISE_DATA_DIR: "/mise-data"
-  KIND_VERSION: "0.29.0"
-  KUBECTL_VERSION: "1.31.1"
-  BATS_VERSION: "1.11.0"
-  CLUSTER_VERSION: "1.31.0"
-
-volumes:
-  - name: dockersock
-    host:
-      path: /var/run/docker.sock
-  - name: mise-cache
-    host:
-      path: /root/mise_data_dir
-steps:
-  - name: Create Kind Cluster
-    image: quay.io/sighup/mise:v2025.4.4
-    pull: always
-    network_mode: host
-    environment:
-      GITHUB_TOKEN:
-        from_secret: github_token
-    volumes:
-      - name: dockersock
-        path: /var/run/docker.sock
-      - name: mise-cache
-        path: /mise-data
-    depends_on:
-      - clone
-    commands:
-      - mise use kind@$${KIND_VERSION} kubectl@$${KUBECTL_VERSION} kustomize@5.6.0
-      - eval "$(mise activate bash --shims)"
-      - ./scripts/create-e2e-cluster.sh tigera $${CLUSTER_VERSION}
-
-  - name: Run E2E Tests
-    image: quay.io/sighup/mise:v2025.4.4
-    pull: always
-    network_mode: host
-    environment:
-      GITHUB_TOKEN:
-        from_secret: github_token
-    volumes:
-      - name: mise-cache
-        path: /mise-data
-    depends_on:
-      - Create Kind Cluster
-    commands:
-      - mise use bats@$${BATS_VERSION} kubectl@$${KUBECTL_VERSION} kustomize@5.6.0
-      - eval "$(mise activate bash --shims)"
-      - ./scripts/run-tigera-tests.sh
 
   - name: Delete Kind Cluster
     image: quay.io/sighup/mise:v2025.4.4
@@ -619,6 +437,188 @@ steps:
       - mise use kind@$${KIND_VERSION}
       - eval "$(mise activate bash --shims)"
       - ./scripts/cleanup-e2e-cluster.sh || true
+
+---
+name: E2E Tests Cilium K8s 1.34
+kind: pipeline
+type: docker
+platform:
+  os: linux
+  arch: amd64
+depends_on:
+  - Linting
+clone:
+  depth: 1
+trigger:
+  ref:
+    include:
+      - refs/tags/**
+
+environment:
+  # Mise configuration
+  MISE_DATA_DIR: "/mise-data"
+  KIND_VERSION: "0.29.0"
+  KUBECTL_VERSION: "1.34.0"
+  BATS_VERSION: "1.11.0"
+  CLUSTER_VERSION: "1.34.0"
+
+volumes:
+  - name: dockersock
+    host:
+      path: /var/run/docker.sock
+  - name: mise-cache
+    host:
+      path: /root/mise_data_dir
+steps:
+  - name: Create Kind Cluster
+    image: quay.io/sighup/mise:v2025.4.4
+    pull: always
+    network_mode: host
+    environment:
+      GITHUB_TOKEN:
+        from_secret: github_token
+    volumes:
+      - name: dockersock
+        path: /var/run/docker.sock
+      - name: mise-cache
+        path: /mise-data
+    depends_on:
+      - clone
+    commands:
+      - mise use kind@$${KIND_VERSION} kubectl@$${KUBECTL_VERSION} kustomize@5.6.0
+      - eval "$(mise activate bash --shims)"
+      - ./scripts/create-e2e-cluster.sh cilium $${CLUSTER_VERSION}
+
+  - name: Run E2E Tests
+    image: quay.io/sighup/mise:v2025.4.4
+    pull: always
+    network_mode: host
+    environment:
+      GITHUB_TOKEN:
+        from_secret: github_token
+    volumes:
+      - name: mise-cache
+        path: /mise-data
+    depends_on:
+      - Create Kind Cluster
+    commands:
+      - mise use bats@$${BATS_VERSION} kubectl@$${KUBECTL_VERSION} kustomize@5.6.0
+      - eval "$(mise activate bash --shims)"
+      - ./scripts/run-cilium-tests.sh
+
+  - name: Delete Kind Cluster
+    image: quay.io/sighup/mise:v2025.4.4
+    pull: always
+    network_mode: host
+    environment:
+      GITHUB_TOKEN:
+        from_secret: github_token
+    volumes:
+      - name: dockersock
+        path: /var/run/docker.sock
+      - name: mise-cache
+        path: /mise-data
+    depends_on:
+      - Run E2E Tests
+    when:
+      status:
+        - success
+        - failure
+    commands:
+      - mise use kind@$${KIND_VERSION}
+      - eval "$(mise activate bash --shims)"
+      - ./scripts/cleanup-e2e-cluster.sh || true
+
+---
+name: E2E Tests Tigera K8s 1.34
+kind: pipeline
+type: docker
+platform:
+  os: linux
+  arch: amd64
+depends_on:
+  - Linting
+clone:
+  depth: 1
+trigger:
+  ref:
+    include:
+      - refs/tags/**
+
+environment:
+  # Mise configuration
+  MISE_DATA_DIR: "/mise-data"
+  KIND_VERSION: "0.29.0"
+  KUBECTL_VERSION: "1.34.0"
+  BATS_VERSION: "1.11.0"
+  CLUSTER_VERSION: "1.34.0"
+
+volumes:
+  - name: dockersock
+    host:
+      path: /var/run/docker.sock
+  - name: mise-cache
+    host:
+      path: /root/mise_data_dir
+steps:
+  - name: Create Kind Cluster
+    image: quay.io/sighup/mise:v2025.4.4
+    pull: always
+    network_mode: host
+    environment:
+      GITHUB_TOKEN:
+        from_secret: github_token
+    volumes:
+      - name: dockersock
+        path: /var/run/docker.sock
+      - name: mise-cache
+        path: /mise-data
+    depends_on:
+      - clone
+    commands:
+      - mise use kind@$${KIND_VERSION} kubectl@$${KUBECTL_VERSION} kustomize@5.6.0
+      - eval "$(mise activate bash --shims)"
+      - ./scripts/create-e2e-cluster.sh tigera $${CLUSTER_VERSION}
+
+  - name: Run E2E Tests
+    image: quay.io/sighup/mise:v2025.4.4
+    pull: always
+    network_mode: host
+    environment:
+      GITHUB_TOKEN:
+        from_secret: github_token
+    volumes:
+      - name: mise-cache
+        path: /mise-data
+    depends_on:
+      - Create Kind Cluster
+    commands:
+      - mise use bats@$${BATS_VERSION} kubectl@$${KUBECTL_VERSION} kustomize@5.6.0
+      - eval "$(mise activate bash --shims)"
+      - ./scripts/run-tigera-tests.sh
+
+  - name: Delete Kind Cluster
+    image: quay.io/sighup/mise:v2025.4.4
+    pull: always
+    network_mode: host
+    environment:
+      GITHUB_TOKEN:
+        from_secret: github_token
+    volumes:
+      - name: dockersock
+        path: /var/run/docker.sock
+      - name: mise-cache
+        path: /mise-data
+    depends_on:
+      - Run E2E Tests
+    when:
+      status:
+        - success
+        - failure
+    commands:
+      - mise use kind@$${KIND_VERSION}
+      - eval "$(mise activate bash --shims)"
+      - ./scripts/cleanup-e2e-cluster.sh || true
 ---
 name: release
 kind: pipeline
@@ -628,12 +628,12 @@ node:
 clone:
   depth: 1
 depends_on:
-  - E2E Tests Cilium K8s 1.31
   - E2E Tests Cilium K8s 1.32
   - E2E Tests Cilium K8s 1.33
-  - E2E Tests Tigera K8s 1.31
+  - E2E Tests Cilium K8s 1.34
   - E2E Tests Tigera K8s 1.32
   - E2E Tests Tigera K8s 1.33
+  - E2E Tests Tigera K8s 1.34
 platform:
   os: linux
   arch: amd64
