@@ -37,7 +37,7 @@ grep -A 10 "kind: ServiceMonitor" upstream-check.yaml | grep -i hubble
 helm repo add cilium https://helm.cilium.io/
 helm repo update
 helm search repo cilium/cilium
-helm pull cilium/cilium --version 1.18.1 --untar --untardir /tmp
+helm pull cilium/cilium --version 1.19.0 --untar --untardir /tmp
 ```
 
 1.2. Compare the `MAINTENANCE.values.yaml` with the one from the chart `/tmp/cilium/values.yaml` and port the changes that are needed. For example, update the image tags and check that parameters that were in use are still valid.
@@ -64,7 +64,7 @@ helm pull cilium/cilium --version 1.18.1 --untar --untardir /tmp
 > The Helm template at `templates/cilium-operator/_helpers.tpl` line 35 constructs the image as:  
 > `printf "%s-%s%s%s%s" repository cloud suffix tag imageDigest`  
 > 
-> Using `operator-generic` results in: `operator-generic-generic:v1.18.1` which causes ImagePullBackOff!
+> Using `operator-generic` results in: `operator-generic-generic:v1.19.0` which causes ImagePullBackOff!
 
 2.1. Render the manifests from the upstream Chart
 
@@ -84,10 +84,10 @@ helm template cilium /tmp/cilium \
 
 ```bash
 # Compare the full core manifests
-dyff between --ignore-whitespace-changes --ignore-order-changes upstream-without-hubble.yaml core/deploy.yaml
+dyff between --ignore-whitespace-changes --ignore-order-changes core/deploy.yaml upstream-without-hubble.yaml
 
 # CRITICAL: Focus specifically on ConfigMap changes (most important for functionality)
-dyff between --filter="kind=ConfigMap,metadata.name=cilium-config" upstream-without-hubble.yaml core/deploy.yaml
+dyff between --filter="kind=ConfigMap,metadata.name=cilium-config" core/deploy.yaml upstream-without-hubble.yaml
 
 # Check for new or changed configuration parameters
 grep -A 100 "kind: ConfigMap" upstream-without-hubble.yaml | grep -E "^  [a-z]" > upstream-config.txt
@@ -113,21 +113,21 @@ helm template cilium /tmp/cilium \
 kustomize build hubble > local-with-hubble.yaml
 ```
 
-3.3  Compare the output againts the file `upstream-with-hubble.yaml` to check the differences and port the changes needed to the `hubble` package modifying the `hubble/deploy.yaml` file accordingly.
+3.3. Compare the output against the file `upstream-with-hubble.yaml` to check the differences and port the changes needed to the `hubble` package modifying the `hubble/deploy.yaml` file accordingly.
 
 ```bash
 # Compare hubble deployments 
-dyff between --ignore-whitespace-changes --ignore-order-changes upstream-with-hubble.yaml local-with-hubble.yaml
+dyff between --ignore-whitespace-changes --ignore-order-changes local-with-hubble.yaml upstream-with-hubble.yaml
 
 # Verify hubble config merge worked correctly
-dyff between --filter="kind=ConfigMap,metadata.name=cilium-config" upstream-with-hubble.yaml local-with-hubble.yaml
+dyff between --filter="kind=ConfigMap,metadata.name=cilium-config" local-with-hubble.yaml upstream-with-hubble.yaml
 ```
 
 ### Expected differences with upstream in the Hubble package
 
 As of v1.18.1, our customizations are minimal and focused on essential additions:
 
-- **Grafana dashboards** - Not included in upstream Helm chart. We add them via Kustomize in `monitoring/`.
+- **Grafana dashboards** - Not included in upstream Helm chart. We add them via Kustomize in `*/monitoring/`. Taken from https://github.com/cilium/cilium/tree/main/install/kubernetes/cilium/files
 - **Issuer resources** - Upstream provides Certificate resources but expects the `hubble-issuer` to exist. We provide the Issuer and CA certificate in `resources/pki.yaml`.
 - **Hubble configuration** - Additional Hubble settings merged via ConfigMapGenerator in `config/hubble.env`.
 
