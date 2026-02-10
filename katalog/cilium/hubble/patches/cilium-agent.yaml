@@ -19,6 +19,10 @@ spec:
               containerPort: 9965
               hostPort: 9965
               protocol: TCP
+            - name: peer-service
+              containerPort: 4244
+              hostPort: 4244
+              protocol: TCP
           volumeMounts:
             - name: hubble-metrics-tls
               mountPath: /var/lib/cilium/tls/hubble-metrics
