@@ -252,7 +252,7 @@ spec:
             runAsUser: 65532
             seccompProfile:
               type: RuntimeDefault
-          image: "registry.sighup.io/fury/cilium/hubble-relay:v1.18.1"
+          image: "registry.sighup.io/fury/cilium/hubble-relay:v1.18.7"
           imagePullPolicy: IfNotPresent
           command:
             - hubble-relay
@@ -499,6 +499,9 @@ kind: ServiceMonitor
 metadata:
   name: hubble-relay
   namespace: kube-system
+  labels:
+    app.kubernetes.io/part-of: cilium
+    app.kubernetes.io/name: hubble-relay
 spec:
   selector:
     matchLabels:
@@ -519,6 +522,7 @@ metadata:
   namespace: kube-system
   labels:
     app.kubernetes.io/part-of: cilium
+    app.kubernetes.io/name: hubble
 spec:
   selector:
     matchLabels:

@@ -269,6 +269,7 @@ data:
   proxy-idle-timeout-seconds: "60"
   proxy-max-concurrent-retries: "128"
   http-retry-count: "3"
+  http-stream-idle-timeout: "300"
 
   external-envoy-proxy: "false"
   envoy-base-id: "0"
@@ -861,7 +862,7 @@ spec:
           type: Unconfined
       containers:
       - name: cilium-agent
-        image: "registry.sighup.io/fury/cilium/cilium:v1.18.1"
+        image: "registry.sighup.io/fury/cilium/cilium:v1.18.7"
         imagePullPolicy: IfNotPresent
         command:
         - cilium-agent
@@ -1032,7 +1033,7 @@ spec:
         
       initContainers:
       - name: config
-        image: "registry.sighup.io/fury/cilium/cilium:v1.18.1"
+        image: "registry.sighup.io/fury/cilium/cilium:v1.18.7"
         imagePullPolicy: IfNotPresent
         command:
         - cilium-dbg
@@ -1055,7 +1056,7 @@ spec:
       # Required to mount cgroup2 filesystem on the underlying Kubernetes node.
       # We use nsenter command with host's cgroup and mount namespaces enabled.
       - name: mount-cgroup
-        image: "registry.sighup.io/fury/cilium/cilium:v1.18.1"
+        image: "registry.sighup.io/fury/cilium/cilium:v1.18.7"
         imagePullPolicy: IfNotPresent
         env:
         - name: CGROUP_ROOT
@@ -1092,7 +1093,7 @@ spec:
             drop:
               - ALL
       - name: apply-sysctl-overwrites
-        image: "registry.sighup.io/fury/cilium/cilium:v1.18.1"
+        image: "registry.sighup.io/fury/cilium/cilium:v1.18.7"
         imagePullPolicy: IfNotPresent
         env:
         - name: BIN_PATH
@@ -1130,7 +1131,7 @@ spec:
       # from a privileged container because the mount propagation bidirectional
       # only works from privileged containers.
       - name: mount-bpf-fs
-        image: "registry.sighup.io/fury/cilium/cilium:v1.18.1"
+        image: "registry.sighup.io/fury/cilium/cilium:v1.18.7"
         imagePullPolicy: IfNotPresent
         args:
         - 'mount | grep "/sys/fs/bpf type bpf" || mount -t bpf bpf /sys/fs/bpf'
@@ -1146,7 +1147,7 @@ spec:
           mountPath: /sys/fs/bpf
           mountPropagation: Bidirectional
       - name: clean-cilium-state
-        image: "registry.sighup.io/fury/cilium/cilium:v1.18.1"
+        image: "registry.sighup.io/fury/cilium/cilium:v1.18.7"
         imagePullPolicy: IfNotPresent
         command:
         - /init-container.sh
@@ -1193,7 +1194,7 @@ spec:
           mountPath: /var/run/cilium # wait-for-kube-proxy
       # Install the CNI binaries in an InitContainer so we don't have a writable host mount in the agent
       - name: install-cni-binaries
-        image: "registry.sighup.io/fury/cilium/cilium:v1.18.1"
+        image: "registry.sighup.io/fury/cilium/cilium:v1.18.7"
         imagePullPolicy: IfNotPresent
         command:
           - "/install-plugin.sh"
@@ -1365,7 +1366,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: cilium-operator
-        image: "registry.sighup.io/fury/cilium/operator-generic:v1.18.1"
+        image: "registry.sighup.io/fury/cilium/operator-generic:v1.18.7"
         imagePullPolicy: IfNotPresent
         command:
         - cilium-operator-generic
@@ -1448,7 +1449,9 @@ spec:
           operator: Exists
         - key: node.cilium.io/agent-not-ready
           operator: Exists
-      
+        - key: node.cloudprovider.kubernetes.io/uninitialized
+          operator: Exists
+
       volumes:
         # To read the configuration from the config map
       - name: cilium-config-path
@@ -1463,6 +1466,7 @@ metadata:
   namespace: kube-system
   labels:
     app.kubernetes.io/part-of: cilium
+    app.kubernetes.io/name: cilium-agent
 spec:
   selector:
     matchLabels:
