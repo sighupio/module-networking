@@ -57,27 +57,43 @@ metadata:
   labels:
     app.kubernetes.io/part-of: cilium
 rules:
-  - apiGroups:
-      - ""
-    resources:
-      - componentstatuses
-      - endpoints
-      - namespaces
-      - nodes
-      - pods
-      - services
-    verbs:
-      - get
-      - list
-      - watch
-  - apiGroups:
-      - apiextensions.k8s.io
-    resources:
-      - customresourcedefinitions
-    verbs:
-      - get
-      - list
-      - watch
+- apiGroups:
+  - networking.k8s.io
+  resources:
+  - networkpolicies
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - componentstatuses
+  - endpoints
+  - namespaces
+  - nodes
+  - pods
+  - services
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - apiextensions.k8s.io
+  resources:
+  - customresourcedefinitions
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - cilium.io
+  resources:
+  - '*'
+  verbs:
+  - get
+  - list
+  - watch
 ---
 # Source: cilium/templates/hubble-ui/clusterrolebinding.yaml
 kind: ClusterRoleBinding
@@ -91,9 +107,9 @@ roleRef:
   kind: ClusterRole
   name: hubble-ui
 subjects:
-  - kind: ServiceAccount
-    name: hubble-ui
-    namespace: kube-system
+- kind: ServiceAccount
+  name: hubble-ui
+  namespace: kube-system
 ---
 # Source: cilium/templates/hubble-relay/metrics-service.yaml
 # We use a separate service from hubble-relay which can be exposed externally
@@ -110,10 +126,10 @@ spec:
   selector:
     k8s-app: hubble-relay
   ports:
-    - name: metrics
-      port: 9966
-      protocol: TCP
-      targetPort: prometheus
+  - name: metrics
+    port: 9966
+    protocol: TCP
+    targetPort: prometheus
 ---
 # Source: cilium/templates/hubble-relay/service.yaml
 kind: Service
@@ -130,9 +146,9 @@ spec:
   selector:
     k8s-app: hubble-relay
   ports:
-    - port: 80
-      protocol: TCP
-      targetPort: grpc
+  - port: 80
+    protocol: TCP
+    targetPort: grpc
 ---
 # Source: cilium/templates/hubble-ui/service.yaml
 kind: Service
@@ -149,9 +165,9 @@ spec:
   selector:
     k8s-app: hubble-ui
   ports:
-    - name: http
-      port: 80
-      targetPort: 8081
+  - name: http
+    port: 80
+    targetPort: 8081
 ---
 # Source: cilium/templates/hubble/metrics-service.yaml
 apiVersion: v1
@@ -159,7 +175,6 @@ kind: Service
 metadata:
   name: hubble-metrics
   namespace: kube-system
-  annotations:
   labels:
     k8s-app: hubble
     app.kubernetes.io/name: hubble
@@ -168,10 +183,10 @@ spec:
   clusterIP: None
   type: ClusterIP
   ports:
-    - name: hubble-metrics
-      port: 9965
-      protocol: TCP
-      targetPort: hubble-metrics
+  - name: hubble-metrics
+    port: 9965
+    protocol: TCP
+    targetPort: hubble-metrics
   selector:
     k8s-app: cilium
 ---
@@ -189,10 +204,10 @@ spec:
   selector:
     k8s-app: cilium
   ports:
-    - name: peer-service
-      port: 443
-      protocol: TCP
-      targetPort: 4244
+  - name: peer-service
+    port: 443
+    protocol: TCP
+    targetPort: 4244
   internalTrafficPolicy: Local
 ---
 # Source: cilium/templates/hubble-relay/deployment.yaml
@@ -216,7 +231,6 @@ spec:
     type: RollingUpdate
   template:
     metadata:
-      annotations:
       labels:
         k8s-app: hubble-relay
         app.kubernetes.io/name: hubble-relay
@@ -232,13 +246,13 @@ spec:
             allowPrivilegeEscalation: false
             capabilities:
               drop:
-                - ALL
+              - ALL
             runAsGroup: 65532
             runAsNonRoot: true
             runAsUser: 65532
             seccompProfile:
               type: RuntimeDefault
-          image: "registry.sighup.io/fury/cilium/hubble-relay:v1.19.0"
+          image: "registry.sighup.io/fury/cilium/hubble-relay:v1.18.7"
           imagePullPolicy: IfNotPresent
           command:
             - hubble-relay
@@ -283,12 +297,12 @@ spec:
             # Retry more frequently at startup so that it can be considered started more quickly.
             periodSeconds: 3
           volumeMounts:
-            - name: config
-              mountPath: /etc/hubble-relay
-              readOnly: true
-            - name: tls
-              mountPath: /var/lib/hubble-relay/tls
-              readOnly: true
+          - name: config
+            mountPath: /etc/hubble-relay
+            readOnly: true
+          - name: tls
+            mountPath: /var/lib/hubble-relay/tls
+            readOnly: true
           terminationMessagePolicy: FallbackToLogsOnError
 
       restartPolicy: Always
@@ -299,33 +313,33 @@ spec:
       affinity:
         podAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
-            - labelSelector:
-                matchLabels:
-                  k8s-app: cilium
-              topologyKey: kubernetes.io/hostname
+          - labelSelector:
+              matchLabels:
+                k8s-app: cilium
+            topologyKey: kubernetes.io/hostname
       nodeSelector:
         kubernetes.io/os: linux
       volumes:
-        - name: config
-          configMap:
-            name: hubble-relay-config
-            items:
-              - key: config.yaml
-                path: config.yaml
-        - name: tls
-          projected:
-            # note: the leading zero means this number is in octal representation: do not remove it
-            defaultMode: 0400
-            sources:
-              - secret:
-                  name: hubble-relay-client-certs
-                  items:
-                    - key: tls.crt
-                      path: client.crt
-                    - key: tls.key
-                      path: client.key
-                    - key: ca.crt
-                      path: hubble-server-ca.crt
+      - name: config
+        configMap:
+          name: hubble-relay-config
+          items:
+          - key: config.yaml
+            path: config.yaml
+      - name: tls
+        projected:
+          # note: the leading zero means this number is in octal representation: do not remove it
+          defaultMode: 0400
+          sources:
+          - secret:
+              name: hubble-relay-client-certs
+              items:
+                - key: tls.crt
+                  path: client.crt
+                - key: tls.key
+                  path: client.key
+                - key: ca.crt
+                  path: hubble-server-ca.crt
 ---
 # Source: cilium/templates/hubble-ui/deployment.yaml
 kind: Deployment
@@ -348,7 +362,6 @@ spec:
     type: RollingUpdate
   template:
     metadata:
-      annotations:
       labels:
         k8s-app: hubble-ui
         app.kubernetes.io/name: hubble-ui
@@ -362,53 +375,50 @@ spec:
       serviceAccountName: "hubble-ui"
       automountServiceAccountToken: true
       containers:
-        - name: frontend
-          image: "registry.sighup.io/fury/cilium/hubble-ui:v0.13.3"
-          imagePullPolicy: IfNotPresent
-          ports:
-            - name: http
-              containerPort: 8081
-          livenessProbe:
-            httpGet:
-              path: /healthz
-              port: http
-          readinessProbe:
-            httpGet:
-              path: /
-              port: http
-          volumeMounts:
-            - name: hubble-ui-nginx-conf
-              mountPath: /etc/nginx/conf.d/default.conf
-              subPath: nginx.conf
-            - name: tmp-dir
-              mountPath: /tmp
-          terminationMessagePolicy: FallbackToLogsOnError
-          securityContext:
-            allowPrivilegeEscalation: false
-        - name: backend
-          image: "registry.sighup.io/fury/cilium/hubble-ui-backend:v0.13.3"
-          imagePullPolicy: IfNotPresent
-          env:
-            - name: EVENTS_SERVER_PORT
-              value: "8090"
-            - name: FLOWS_API_ADDR
-              value: "hubble-relay:80"
-          ports:
-            - name: grpc
-              containerPort: 8090
-          terminationMessagePolicy: FallbackToLogsOnError
-          securityContext:
-            allowPrivilegeEscalation: false
-          volumeMounts:
+      - name: frontend
+        image: "registry.sighup.io/fury/cilium/hubble-ui:v0.13.3"
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 8081
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8081
+        volumeMounts:
+        - name: hubble-ui-nginx-conf
+          mountPath: /etc/nginx/conf.d/default.conf
+          subPath: nginx.conf
+        - name: tmp-dir
+          mountPath: /tmp
+        terminationMessagePolicy: FallbackToLogsOnError
+        securityContext:
+          allowPrivilegeEscalation: false
+      - name: backend
+        image: "registry.sighup.io/fury/cilium/hubble-ui-backend:v0.13.3"
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: EVENTS_SERVER_PORT
+          value: "8090"
+        - name: FLOWS_API_ADDR
+          value: "hubble-relay:80"
+        ports:
+        - name: grpc
+          containerPort: 8090
+        terminationMessagePolicy: FallbackToLogsOnError
       nodeSelector:
         kubernetes.io/os: linux
       volumes:
-        - configMap:
-            defaultMode: 420
-            name: hubble-ui-nginx
-          name: hubble-ui-nginx-conf
-        - emptyDir: {}
-          name: tmp-dir
+      - configMap:
+          defaultMode: 420
+          name: hubble-ui-nginx
+        name: hubble-ui-nginx-conf
+      - emptyDir: {}
+        name: tmp-dir
 ---
 # Source: cilium/templates/hubble/tls-certmanager/metrics-server-secret.yaml
 apiVersion: cert-manager.io/v1
@@ -446,17 +456,17 @@ spec:
     kind: Issuer
     name: hubble-issuer
   secretName: hubble-relay-client-certs
-  commonName: "*.hubble-relay.cilium.io"
+  commonName: '*.hubble-relay.cilium.io'
   dnsNames:
-    - "*.hubble-relay.cilium.io"
+  - '*.hubble-relay.cilium.io'
   duration: 26280h0m0s
   privateKey:
     rotationPolicy: Always
   isCA: false
   usages:
-    - signing
-    - key encipherment
-    - client auth
+  - signing
+  - key encipherment
+  - client auth
 ---
 # Source: cilium/templates/hubble/tls-certmanager/server-secret.yaml
 apiVersion: cert-manager.io/v1
@@ -470,9 +480,9 @@ spec:
     kind: Issuer
     name: hubble-issuer
   secretName: hubble-server-certs
-  commonName: "*.default.hubble-grpc.cilium.io"
+  commonName: '*.default.hubble-grpc.cilium.io'
   dnsNames:
-    - "*.default.hubble-grpc.cilium.io"
+  - '*.default.hubble-grpc.cilium.io'
   duration: 26280h0m0s
   privateKey:
     rotationPolicy: Always
@@ -498,11 +508,11 @@ spec:
       k8s-app: hubble-relay
   namespaceSelector:
     matchNames:
-      - kube-system
+    - kube-system
   endpoints:
-    - port: metrics
-      interval: 10s
-      path: /metrics
+  - port: metrics
+    interval: 10s
+    path: /metrics
 ---
 # Source: cilium/templates/hubble/servicemonitor.yaml
 apiVersion: monitoring.coreos.com/v1
@@ -519,18 +529,18 @@ spec:
       k8s-app: hubble
   namespaceSelector:
     matchNames:
-      - kube-system
+    - kube-system
   endpoints:
-    - port: hubble-metrics
-      interval: "10s"
-      honorLabels: true
-      path: /metrics
-      tlsConfig:
-        serverName: default.hubble-metrics.cilium.io
-      scheme: https
-      relabelings:
-        - action: replace
-          replacement: ${1}
-          sourceLabels:
-            - __meta_kubernetes_pod_node_name
-          targetLabel: node
+  - port: hubble-metrics
+    interval: "10s"
+    honorLabels: true
+    path: /metrics
+    tlsConfig:
+      serverName: default.hubble-metrics.cilium.io
+    scheme: https
+    relabelings:
+    - action: replace
+      replacement: ${1}
+      sourceLabels:
+      - __meta_kubernetes_pod_node_name
+      targetLabel: node

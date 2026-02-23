@@ -6,38 +6,22 @@
 image:
   override: ~
   repository: "registry.sighup.io/fury/cilium/cilium"
+  tag: "v1.18.7"
   useDigest: false
+
+# -- Affinity for cilium-agent.
+affinity:
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      - topologyKey: kubernetes.io/hostname
+        labelSelector:
+          matchLabels:
+            k8s-app: cilium
 
 hubble:
   # -- Enable Hubble (true by default).
   enabled: true
 
-  metrics:
-    enabled:
-      - dns
-      - drop
-      - tcp
-      - flow
-      - port-distribution
-      - icmp
-      - httpV2:exemplars=true;labelsContext=source_ip,source_namespace,source_workload,destination_ip,destination_namespace,destination_workload,traffic_direction
-    enableOpenMetrics: true
-    tls:
-      enabled: true
-    serviceMonitor:
-      enabled: true
-      tlsConfig:
-        ca:
-          secret:
-            name: hubble-ca-secret
-            key: ca.crt
-    # TODO: we may want to use the dashboards from the Helm chart instead of keeping them updated manually separetely.
-    dashboards:
-      enabled: false
-      namespace: kube-system
-      label: grafana-sighup-dashboard
-      annotations:
-        grafana-folder: "Networking"
   tls:
     # -- Enable mutual TLS for listenAddress. Setting this value to false is
     # highly discouraged as the Hubble API provides access to potentially
@@ -67,6 +51,21 @@ hubble:
         kind: Issuer
         name: hubble-issuer
 
+  metrics:
+    tls:
+      enabled: true
+    enableOpenMetrics: true
+    serviceMonitor:
+      enabled: true
+    enabled:
+      - dns
+      - drop
+      - tcp
+      - flow
+      - port-distribution
+      - icmp
+      - httpV2:exemplars=true;labelsContext=source_ip,source_namespace,source_workload,destination_ip,destination_namespace,destination_workload,traffic_direction
+
   relay:
     # -- Enable Hubble Relay (requires hubble.enabled=true)
     enabled: true
@@ -78,6 +77,7 @@ hubble:
     image:
       override: ~
       repository: "registry.sighup.io/fury/cilium/hubble-relay"
+      tag: "v1.18.7"
 
       useDigest: false
       pullPolicy: "IfNotPresent"
@@ -156,6 +156,75 @@ hubble:
         ipv6:
           enabled: true
 
+# -- Method to use for identity allocation (`crd` or `kvstore`).
+identityAllocationMode: "crd"
+
+# -- (string) Time to wait before using new identity on endpoint identity change.
+# @default -- `"5s"`
+identityChangeGracePeriod: ""
+
+# -- Install Iptables rules to skip netfilter connection tracking on all pod
+# traffic. This option is only effective when Cilium is running in direct
+# routing and full KPR mode. Moreover, this option cannot be enabled when Cilium
+# is running in a managed Kubernetes environment or in a chained CNI setup.
+installNoConntrackIptablesRules: false
+ipam:
+  mode: "cluster-pool"
+  installUplinkRoutesForDelegatedIPAM: false
+  operator:
+    clusterPoolIPv4PodCIDRList: ["10.0.0.0/8"]
+    clusterPoolIPv4MaskSize: 24
+    clusterPoolIPv6PodCIDRList: ["fd00::/104"]
+    clusterPoolIPv6MaskSize: 120
+
+defaultLBServiceIPAM: lbipam
+nodeIPAM:
+  enabled: false
+# -- Configure the eBPF-based ip-masq-agent
+ipMasqAgent:
+  enabled: false
+# the config of nonMasqueradeCIDRs
+# config:
+#   nonMasqueradeCIDRs: []
+#   masqLinkLocal: false
+#   masqLinkLocalIPv6: false
+
+# iptablesLockTimeout defines the iptables "--wait" option when invoked from Cilium.
+# iptablesLockTimeout: "5s"
+
+ipv4:
+  # -- Enable IPv4 support.
+  enabled: true
+
+ipv6:
+  # -- Enable IPv6 support.
+  enabled: false
+
+# -- Configure Kubernetes specific configuration
+k8s:
+  # -- requireIPv4PodCIDR enables waiting for Kubernetes to provide the PodCIDR
+  # range via the Kubernetes node resource
+  requireIPv4PodCIDR: false
+
+  # -- requireIPv6PodCIDR enables waiting for Kubernetes to provide the PodCIDR
+  # range via the Kubernetes node resource
+  requireIPv6PodCIDR: false
+# -- Enable Layer 7 network policy.
+l7Proxy: true
+
+# -- Enable Local Redirect Policy.
+localRedirectPolicy: false
+
+# To include or exclude matched resources from cilium identity evaluation
+# labels: ""
+
+# logOptions allows you to define logging options. eg:
+# logOptions:
+#   format: json
+
+# -- Enables periodic logging of system load
+logSystemLoad: false
+
 # -- Configure prometheus metrics on the configured port at /metrics
 prometheus:
   metricsService: true
@@ -165,8 +234,36 @@ prometheus:
     # -- Enable service monitors.
     # This requires the prometheus CRDs to be available (see https://github.com/prometheus-operator/prometheus-operator/blob/master/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml)
     enabled: true
+    # -- Labels to add to ServiceMonitor cilium-agent
+    labels: {}
+    # -- Annotations to add to ServiceMonitor cilium-agent
+    annotations: {}
+    # -- Interval for scrape metrics.
+    interval: "10s"
+    # -- Specify the Kubernetes namespace where Prometheus expects to find
+    # service monitors configured.
+    # namespace: ""
+    # -- Relabeling configs for the ServiceMonitor cilium-agent
+    relabelings:
+      - sourceLabels:
+          - __meta_kubernetes_pod_node_name
+        targetLabel: node
+        replacement: ${1}
+    # -- Metrics relabeling configs for the ServiceMonitor cilium-agent
+    metricRelabelings: ~
+  # -- Metrics that should be enabled or disabled from the default metric
+  # list. (+metric_foo to enable metric_foo , -metric_bar to disable
+  # metric_bar).
+  # ref: https://docs.cilium.io/en/stable/operations/metrics/#exported-metrics
+  metrics: ~
 
 operator:
+  # -- Enable the cilium-operator component (required).
+  enabled: true
+
+  # -- Roll out cilium-operator pods automatically when configmap is updated.
+  rollOutPods: false
+
   # -- cilium-operator image.
   image:
     override: ~
@@ -174,8 +271,10 @@ operator:
     # Helm template automatically appends cloud suffix (defaults to "generic")
     # See templates/cilium-operator/_helpers.tpl line 35 for logic:
     # printf "%s-%s%s%s%s" .Values.operator.image.repository $cloud .Values.operator.image.suffix $tag $imageDigest
-    # Result: registry.sighup.io/fury/cilium/operator-generic:v1.19.0
+    # Result: registry.sighup.io/fury/cilium/operator-generic:v1.18.7
     repository: "registry.sighup.io/fury/cilium/operator"
+    tag: "v1.18.7"
+
     useDigest: false
     pullPolicy: "IfNotPresent"
     suffix: ""
@@ -191,13 +290,13 @@ operator:
       # This requires the prometheus CRDs to be available (see https://github.com/prometheus-operator/prometheus-operator/blob/master/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml)
       enabled: true
 
-envoy:
+nodeinit:
+  # -- Enable the node initialization DaemonSet
   enabled: false
 
-# TODO: we may want to use the dashboards from the Helm chart instead of keeping them updated manually separetely.
-dashboards:
+preflight:
+  # -- Enable Cilium pre-flight resources (required for upgrade)
   enabled: false
-  namespace: kube-system
-  label: grafana-sighup-dashboard
-  annotations:
-    grafana-folder: "Networking"
+
+envoy:
+  enabled: false
