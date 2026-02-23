@@ -19,7 +19,9 @@ configMapGenerator:
       - config/hubble.env
 
 patches:
-  - path: patches/cilium-agent.yaml
+  - path: patches/cilium.yaml
+  # We patch the ServiceMonitor to add the CA for TLS metrics scraping, otherwise
+  # Prometheus will fail to scrape the metrics endpoint.
   - target:
       kind: ServiceMonitor
       name: hubble
