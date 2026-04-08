@@ -34,18 +34,16 @@ spec:
 #   name: default
 # spec: {}
 
-# ---
-# By default we don't deploy the Calico Goldmane flow aggregator. If you need it / want it you can deploy it by uncommenting the definition below.
-# # Configures the Calico Goldmane flow aggregator.
-# apiVersion: operator.tigera.io/v1
-# kind: Goldmane
-# metadata:
-#   name: default
+---
+# Configures the Calico Goldmane flow aggregator. Required for Whisker.
+apiVersion: operator.tigera.io/v1
+kind: Goldmane
+metadata:
+  name: default
 
-# ---
-# By default we don't deploy the Calico Whisker observability UI. If you need it / want it you can deploy it by uncommenting the definition below.
-# # Configures the Calico Whisker observability UI.
-# apiVersion: operator.tigera.io/v1
-# kind: Whisker
-# metadata:
-#   name: default
+---
+# Configures the Calico Whisker observability UI.
+apiVersion: operator.tigera.io/v1
+kind: Whisker
+metadata:
+  name: default
