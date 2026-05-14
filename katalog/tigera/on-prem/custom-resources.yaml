@@ -23,6 +23,8 @@ spec:
         # encapsulation: VXLANCrossSubnet
         # natOutgoing: Enabled
         # nodeSelector: all()
+    # Configures LinuxDataplane. Default is "Iptables". Uncomment below when kube-proxy is in nftables mode.
+    # linuxDataplane: "Nftables"
 
 # ---
 # By default we don't deploy the API Server. If you need it / want it you can deploy it by uncommenting the definition below.
