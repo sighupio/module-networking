@@ -87,6 +87,9 @@ spec:
     - interval: 15s
       # targetPort: 9093
       port: metrics
+      relabelings:
+        - targetLabel: job
+          replacement: typha_metrics
   jobLabel: k8s-app
   namespaceSelector:
     matchNames:

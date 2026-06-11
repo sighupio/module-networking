@@ -67,6 +67,18 @@ curl -L https://raw.githubusercontent.com/projectcalico/calico/v${CALICO_VERSION
 curl -L https://raw.githubusercontent.com/projectcalico/calico/v${CALICO_VERSION}/manifests/grafana-dashboards.yaml | yq '.data["typha-dashboard.json"]' | sed 's/calico-demo-prometheus/prometheus/g' | jq > ./on-prem/monitoring/dashboards/typa-dashboard.json
 ```
 
+##### ServiceMonitor job label
+
+The upstream Typha dashboard queries metrics with `job="typha_metrics"`. The ServiceMonitor in `monitoring/sm.yaml` uses `jobLabel: k8s-app` which produces `job="calico-typha"`. A relabeling override is applied to fix this:
+
+```yaml
+relabelings:
+  - targetLabel: job
+    replacement: typha_metrics
+```
+
+When updating, verify the relabeling is still present on the calico-typha ServiceMonitor.
+
 #### Alerts
 
 Calico / Tigera upstream does not provide a set of Prometheus Rules that we could include, from [their monitoring documentation](https://projectcalico.docs.tigera.io/maintenance/monitor/monitor-component-metrics) here are the available metrics:
