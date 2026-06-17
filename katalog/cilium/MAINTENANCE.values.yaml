@@ -6,7 +6,7 @@
 image:
   override: ~
   repository: "registry.sighup.io/fury/cilium/cilium"
-  tag: "v1.18.7"
+  tag: "v1.18.11"
   useDigest: false
 
 # -- Affinity for cilium-agent.
@@ -70,7 +70,13 @@ hubble:
       - port-distribution
       - icmp
       - httpV2:exemplars=true;labelsContext=source_ip,source_namespace,source_workload,destination_ip,destination_namespace,destination_workload,traffic_direction
-
+    dashboards:
+      enabled: true
+      annotations:
+        grafana-folder: "Networking"
+      label: grafana-sighup-dashboard
+      namespace: ~
+      labelValue: "true"
   relay:
     # -- Enable Hubble Relay (requires hubble.enabled=true)
     enabled: true
@@ -82,7 +88,7 @@ hubble:
     image:
       override: ~
       repository: "registry.sighup.io/fury/cilium/hubble-relay"
-      tag: "v1.18.7"
+      tag: "v1.18.11"
 
       useDigest: false
       pullPolicy: "IfNotPresent"
@@ -126,7 +132,7 @@ hubble:
       image:
         override: ~
         repository: "registry.sighup.io/fury/cilium/hubble-ui-backend"
-        tag: "v0.13.3"
+        tag: "v0.13.5"
 
         useDigest: false
         pullPolicy: "IfNotPresent"
@@ -144,7 +150,7 @@ hubble:
       image:
         override: ~
         repository: "registry.sighup.io/fury/cilium/hubble-ui"
-        tag: "v0.13.3"
+        tag: "v0.13.5"
         useDigest: false
         pullPolicy: "IfNotPresent"
 
@@ -256,10 +262,10 @@ prometheus:
         replacement: ${1}
     # -- Metrics relabeling configs for the ServiceMonitor cilium-agent
     metricRelabelings: ~
-  # -- Metrics that should be enabled or disabled from the default metric
-  # list. (+metric_foo to enable metric_foo , -metric_bar to disable
-  # metric_bar).
-  # ref: https://docs.cilium.io/en/stable/operations/metrics/#exported-metrics
+  # -- Metrics that should be enabled or disabled from the default metric list.
+  # The list is expected to be separated by a space. (+metric_foo to enable
+  # metric_foo , -metric_bar to disable metric_bar).
+  # ref: https://docs.cilium.io/en/stable/observability/metrics/
   metrics: ~
 
 operator:
@@ -278,12 +284,18 @@ operator:
     # printf "%s-%s%s%s%s" .Values.operator.image.repository $cloud .Values.operator.image.suffix $tag $imageDigest
     # Result: registry.sighup.io/fury/cilium/operator-generic:v1.18.7
     repository: "registry.sighup.io/fury/cilium/operator"
-    tag: "v1.18.7"
+    tag: "v1.18.11"
 
     useDigest: false
     pullPolicy: "IfNotPresent"
     suffix: ""
-
+  dashboards:
+    enabled: true
+    label: grafana-sighup-dashboard
+    namespace: ~
+    labelValue: "true"
+    annotations:
+      grafana-folder: "Networking"
   # -- Enable prometheus metrics for cilium-operator on the configured port at
   # /metrics
   prometheus:
@@ -305,3 +317,11 @@ preflight:
 
 envoy:
   enabled: false
+
+dashboards:
+  enabled: true
+  label: grafana-sighup-dashboard
+  namespace: ~
+  labelValue: "true"
+  annotations:
+    grafana-folder: "Networking"
