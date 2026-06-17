@@ -35,3 +35,12 @@ kustomize build katalog/tigera/on-prem | kubectl apply -f -
 ```bash
 kustomize build katalog/cilium | kubectl apply -f -
 ```
+
+> [!IMPORTANT]
+> The new single package introduces a cyclic dependency between Cilium and cert-manager. Hubble (deployed together with Cilium) requires cert-manager, and cert-manager requires at least some nodes to be ready (CNI working) to be scheduled.
+>
+> You may need to adjust your deployment strategy while switching to the unified package.
+>
+> For example, if you are using a tool that verifies dependencies (like Carvel `kapp`) you may apply cert-manager and cilium together in the same `kapp deploy` command.
+>
+> If you are using plain `kubectl apply` instead, you will see some messages saying that the resources that require cert-manager (like `Certificate`, `Issuer`, etc.) are not being deployed. You will need to re-apply the cilium package after you've deployed cert-manager so Hubble works.

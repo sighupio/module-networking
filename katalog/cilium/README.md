@@ -88,6 +88,15 @@ You can deploy Cilium by running the following command in the root of this packa
 kustomize build . | kubectl apply -f -
 ```
 
+> [!IMPORTANT]
+> The new single package introduces a cyclic dependency between Cilium and cert-manager. Hubble (deployed together with Cilium) requires cert-manager, and cert-manager requires at least some nodes to be ready (CNI working) to be scheduled.
+>
+> You may need to adjust your deployment strategy while switching to the unified package.
+>
+> For example, if you are using a tool that verifies dependencies (like Carvel `kapp`) you may apply cert-manager and cilium together in the same `kapp deploy` command.
+>
+> If you are using plain `kubectl apply` instead, you will see some messages saying that the resources that require cert-manager (like `Certificate`, `Issuer`, etc.) are not being deployed. You will need to re-apply the cilium package after you've deployed cert-manager so Hubble works.
+
 <!-- LINKS -->
 [cilium-documentation]: https://docs.cilium.io/en/stable/
 [prometheus-operator]: https://github.com/sighup-io/fury-kubernetes-monitoring/blob/master/katalog/prometheus-operator
