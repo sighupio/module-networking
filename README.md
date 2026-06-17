@@ -23,9 +23,7 @@ If you are new to SD please refer to the [official documentation][skd-docs] on h
 
 Kubernetes has adopted the Container Network Interface (CNI) specification for managing network resources on a cluster.
 
-**Networking Module** makes use of CNCF recommended [Project Calico](https://www.projectcalico.org/), open-source networking and network security solution for containers, virtual machines, and bare-metal workloads, to bring networking features to the SIGHUP Distribution.
-
-Calico deployment consists of a daemon set running on every node (including control-plane nodes) and a controller.
+**Networking Module** makes use of CNCF Projects [Tigera Calico](https://www.projectcalico.org/) and [Cilium](https://cilium.io/), open-source networking and network security solutions for containers, virtual machines, and bare-metal workloads, to bring networking features to the SIGHUP Distribution.
 
 ## Packages
 
@@ -35,8 +33,6 @@ Networking Module provides the following packages:
 | -------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [cilium](katalog/cilium)   | `1.18.7` | [Cilium][cilium-page] CNI Plugin. For cluster with `< 200` nodes.                                                                                    |
 | [tigera](katalog/tigera)   | `1.40.3` | [Tigera Operator][tigera-page], a Kubernetes Operator for Calico, provides pre-configured installations for on-prem and for EKS in policy-only mode. |
-
-> The resources in these packages are going to be deployed in `kube-system` namespace. Except for the operator.
 
 Click on each package to see its full documentation.
 
@@ -59,9 +55,7 @@ Check the [compatibility matrix][compatibility-matrix] for additional informatio
 | [furyctl][furyctl-repo]     | `>=0.6.0` | The recommended tool to download and manage SD modules and their packages. To learn more about `furyctl` read the [official documentation][furyctl-repo].       |
 | [kustomize][kustomize-repo] | `=3.5.3`  | Packages are customized using `kustomize`. To learn how to create your customization layer with `kustomize`, please refer to their [repository][kustomize-repo]. |
 
-### Deployment
-
-> ⚠️  Please notice that the Calico packages is for cluster with less the 50 nodes. If your cluster has more than 50 nodes, you'll need to switch to [Calico + Typha](https://docs.tigera.io/calico/latest/getting-started/kubernetes/self-managed-onprem/onpremises) or to the [Tigera Operator](katalog/tigera/README.md).
+### Deployment with furyctl legacy
 
 1. List the packages you want to deploy and their version in a `Furyfile.yml`
 
@@ -128,7 +122,6 @@ The following set of alerts is included with the networking module:
 
 <!-- Links -->
 
-[calico-page]: https://github.com/projectcalico/calico
 [cilium-page]: https://github.com/cilium/cilium
 [tigera-page]: https://github.com/projectcalico/calico
 [skd-repo]: https://github.com/sighupio/distribution

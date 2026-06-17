@@ -4,7 +4,6 @@
 
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-
 resources:
-  - deploy.yaml
-  - monitoring
+  - ../../cilium
+  - https://github.com/sighupio/module-ingress/katalog/cert-manager?ref=v5.0.1

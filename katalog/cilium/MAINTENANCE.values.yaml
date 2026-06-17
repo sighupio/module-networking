@@ -57,6 +57,11 @@ hubble:
     enableOpenMetrics: true
     serviceMonitor:
       enabled: true
+      tlsConfig:
+        ca:
+          secret:
+            name: hubble-ca-secret
+            key: ca.crt
     enabled:
       - dns
       - drop

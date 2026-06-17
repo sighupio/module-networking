@@ -26,13 +26,11 @@ load ./../helper
     [ "$status" -eq 0 ]
 }
 
-@test "Install Cilium core" {
+@test "Install Cilium and cert-manager" {
     info
-    show "Creating kube-system namespace..."
-    kubectl create namespace kube-system --dry-run=client -o yaml | kubectl apply -f -
-    show "Deploying Cilium..."
+    show "Deploying Cilium and cert-manager..."
     test() {
-        apply katalog/cilium/core
+        apply katalog/tests/cilium
     }
     loop_it test 60 5
     status=${loop_it_result}
@@ -71,33 +69,11 @@ load ./../helper
     [ "$status" -eq 0 ]
 }
 
-@test "Install cert-manager (needed for Hubble)" {
-    info
-    show "Deploying cert-manager..."
-    test() {
-        apply https://github.com/sighupio/module-ingress/katalog/cert-manager?ref=v4.1.0-rc.0 cert-manager
-    }
-    loop_it test 60 5
-    status=${loop_it_result}
-    [ "$status" -eq 0 ]
-}
-
 @test "cert-manager-webhook is Ready" {
     info
     show "Waiting for cert-manager-webhook deployments to be fully ready..."
     test() {
         check_deploy_ready "cert-manager-webhook" "cert-manager"
-    }
-    loop_it test 60 5
-    status=${loop_it_result}
-    [ "$status" -eq 0 ]
-}
-
-@test "Install Hubble" {
-    info
-    show "Deploying Cilium + Hubble..."
-    test() {
-        apply katalog/cilium/hubble core # reuse same app name
     }
     loop_it test 60 5
     status=${loop_it_result}
@@ -115,3 +91,27 @@ load ./../helper
     status=${loop_it_result}
     [ "$status" -eq 0 ]
 }
+
+@test "Cilium Health check" {
+    info
+    show "Running cilium status --wait to check overall health of Cilium components..."
+    test() {
+        cilium status --wait
+    }
+    loop_it test 60 5
+    status=${loop_it_result}
+    [ "$status" -eq 0 ]
+}
+
+# TIP: You can uncomment this test so run the Cilium Connectivity test
+# NOTE the connectivy tests are time consuming (~10 minutes).
+# @test "Cilium Connectivity test" {
+#     info
+#     show "Running cilium connectivity test..."
+#     test() {
+#         cilium connectivity test --exit-zero-on-failure
+#     }
+#     loop_it test 60 5
+#     status=${loop_it_result}
+#     [ "$status" -eq 0 ]
+# }
