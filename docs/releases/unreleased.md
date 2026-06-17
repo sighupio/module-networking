@@ -2,9 +2,7 @@
 
 Welcome to the latest release of the `Networking` module of [`SIGHUP Distribution`](https://github.com/sighupio/distribution) maintained by team SIGHUP by ReeVo.
 
-
 ## Component Images 🚢
-
 
 ## Bug fixes 🐞
 
@@ -13,16 +11,27 @@ Welcome to the latest release of the `Networking` module of [`SIGHUP Distributio
 
 ## Breaking Changes 💔
 
-
+- [[#109](https://github.com/sighupio/module-networking/pull/109)] **Remove Cilium Core Package**: Cilium previously was provided in two variants: Core and Core+Hubble. The Core variant has been deprecated in favour of keeping a single package Core+Hubble.
 
 ## Update Guide 🦮
 
 ### Process
 
-1. Just deploy as usual:
+#### Tigera Calico On Premises
 
 ```bash
 kustomize build katalog/tigera/on-prem | kubectl apply -f -
-# OR
+```
+
+#### Cilium
+
+> [!NOTE]
+> If you were using the `core` only variant of Cilium you will now get the one with Hubble instead.
+>
+> If you were pointing to the `core` package (`katalog/cilium/core`) or the `hubble` package (`katalog/cilium/hubble`) directly, update the reference to `katalog/cilium`.
+>
+> See the Breaking changes section for more details.
+
+```bash
 kustomize build katalog/cilium | kubectl apply -f -
 ```
