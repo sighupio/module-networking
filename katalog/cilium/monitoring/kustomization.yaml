@@ -16,6 +16,10 @@ generatorOptions:
   disableNameSuffixHash: true
 
 configMapGenerator:
+  - name: cilium-grafana-dashboard
+    files:
+      - dashboards/cilium-agent-dashboard.json
+      - dashboards/cilium-operator-dashboard.json
   - name: hubble-grafana-dashboard
     files:
       - dashboards/hubble-dashboard.json

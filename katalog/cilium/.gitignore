@@ -1,3 +1,4 @@
 local-with-hubble.yaml
 upstream-with-hubble.yaml
 upstream-without-hubble.yaml
+upstream.yaml
