@@ -46,6 +46,24 @@ helm template cilium /tmp/cilium \
 dyff between --ignore-whitespace-changes --ignore-order-changes resources/deploy.yaml upstream.yaml
 ```
 
+2.3. Run e2e-locally (make sure you have Docker running):
+
+```bash
+mise run e2e-cilium
+```
+
+> [!NOTE]
+> The Kind cluster used for the e2e tests is configured to use kube-proxy in IPVS
+> mode, following the default for on-Premises installer.
+>
+> Check that this is still the case because we are switching to NFTables mode.
+>
+> See for more details:
+>
+> - https://github.com/sighupio/installer-on-premises/issues/158
+> - https://github.com/sighupio/installer-on-premises/pull/168
+> - The `/katalog/tests/kind/config.yml` file
+
 ### Expected differences with upstream in the Hubble package
 
 Our customizations are minimal and focused on essential additions:
