@@ -366,6 +366,20 @@ rules:
       - envoy-gateway-topology-injector.tigera-gateway
     verbs:
       - update
+  # The operator manages ValidatingAdmissionPolicy resources for the Gateway API
+  # safe-upgrades policy shipped by Envoy Gateway v1.8+.
+  - apiGroups:
+      - admissionregistration.k8s.io
+    resources:
+      - validatingadmissionpolicies
+      - validatingadmissionpolicybindings
+    verbs:
+      - create
+      - update
+      - delete
+      - get
+      - list
+      - watch
   # Needed for operator lock
   - apiGroups:
       - coordination.k8s.io
@@ -472,7 +486,8 @@ rules:
       - tlsroutes.gateway.networking.k8s.io
       - udproutes.gateway.networking.k8s.io
       - xbackendtrafficpolicies.gateway.networking.x-k8s.io
-      - xlistenersets.gateway.networking.x-k8s.io
+      - listenersets.gateway.networking.k8s.io
+      - xmeshes.gateway.networking.x-k8s.io
       - backends.gateway.envoyproxy.io
       - backendtrafficpolicies.gateway.envoyproxy.io
       - clienttrafficpolicies.gateway.envoyproxy.io
@@ -591,13 +606,13 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       containers:
         - name: tigera-operator
-          image: quay.io/tigera/operator:v1.40.3
+          image: quay.io/tigera/operator:v1.40.13
           imagePullPolicy: IfNotPresent
           command:
             - operator
           args:
             # Configure tigera-operator to manage installation of the necessary CRDs.
-            - -manage-crds=false
+            - -manage-crds=true
           volumeMounts:
             - name: var-lib-calico
               readOnly: true
@@ -612,7 +627,7 @@ spec:
             - name: OPERATOR_NAME
               value: "tigera-operator"
             - name: TIGERA_OPERATOR_INIT_IMAGE_VERSION
-              value: v1.40.3
+              value: v1.40.13
           envFrom:
             - configMapRef:
                 name: kubernetes-services-endpoint

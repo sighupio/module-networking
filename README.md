@@ -29,10 +29,10 @@ Kubernetes has adopted the Container Network Interface (CNI) specification for m
 
 Networking Module provides the following packages:
 
-| Package                    | Version   | Description                                                                                                                                          |
-| -------------------------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [cilium](katalog/cilium)   | `1.18.11` | [Cilium][cilium-page] CNI Plugin. For cluster with `< 200` nodes.                                                                                    |
-| [tigera](katalog/tigera)   | `1.40.3`  | [Tigera Operator][tigera-page], a Kubernetes Operator for Calico, provides pre-configured installations for on-prem and for EKS in policy-only mode. |
+| Package                    | Version                     | Description                                                                                                                                          |
+| -------------------------- | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [cilium](katalog/cilium)   | `1.18.11`                   | [Cilium][cilium-page] CNI Plugin. For cluster with `< 200` nodes.                                                                                    |
+| [tigera](katalog/tigera)   | `1.40.13` (Calico `3.31.6`) | [Tigera Operator][tigera-page], a Kubernetes Operator for Calico, provides pre-configured installations for on-prem and for EKS in policy-only mode. |
 
 Click on each package to see its full documentation.
 

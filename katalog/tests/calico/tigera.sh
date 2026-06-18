@@ -26,10 +26,9 @@ load ./../helper
     [ "$status" -eq 0 ]
 }
 
-# 
 @test "Install Tigera operator and calico operated" {
     info
-    show "Creating calico-system namespace..."
+    show "Creating calico-system namespace for Grafana Dashboard configmaps..."
     kubectl create namespace calico-system --dry-run=client -o yaml | kubectl apply -f -
     show "Deploying Tigera operator..."
     test() {
@@ -39,6 +38,17 @@ load ./../helper
     status=${loop_it_result}
     [ "$status" -eq 0 ]
 }
+
+# @test "Patch to use IPVS dataplane" {
+#     info
+#     show "Patching Tigera Install for IPVS dataplane..."
+#     test() {
+#         kubectl patch installation default --type='json' -p='[{"op": "replace", "path": "/spec/calicoNetwork/linuxDataplane", "value":"IPVS"}]'
+#     }
+#     loop_it test 60 5
+#     status=${loop_it_result}
+#     [ "$status" -eq 0 ]
+# }
 
 @test "Tigera Operator Deployment is Ready" {
     info
@@ -99,10 +109,19 @@ load ./../helper
     [ "$status" -eq 0 ]
 }
 
+@test "Tigera Statuses all Available" {
+    info
+    test() {
+        kubectl wait --for=condition=Available --all tigerastatuses.operator.tigera.io --timeout=240s
+    }
+    run test
+    [ "$status" -eq 0 ]
+}
+
 @test "Apply whitelist-system-ns GlobalNetworkPolicy" {
     info
     install() {
-        kubectl apply -f examples/globalnetworkpolicies/1.whitelist-system-namespace.yml
+        kubectl apply -f katalog/tests/calico/resources/1.whitelist-system-namespace.yaml
     }
     run install
     [ "$status" -eq 0 ]
@@ -153,7 +172,7 @@ load ./../helper
 @test "Apply deny-all GlobalNetworkPolicy" {
     info
     install() {
-        kubectl apply -f examples/globalnetworkpolicies/2000.deny-all.yml
+        kubectl apply -f katalog/tests/calico/resources/2000.deny-all.yaml
     }
     run install
     [ "$status" -eq 0 ]

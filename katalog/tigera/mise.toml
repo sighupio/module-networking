@@ -1,0 +1,77 @@
+[tasks."maintenance"]
+description = "Run maintenance task to upgrade the package with upstream changes"
+usage = '''
+arg <version> help="Calico version to update to (e.g., v3.31.6)"
+'''
+run = '''
+#!/usr/bin/env bash
+
+# Maintenance task to update the Tigera Operator and Calico manifests to a new version.
+set -euo pipefail
+
+# Adapt sed command for macos and enable extended regex (-E) for consistent capture groups
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  SED_INPLACE=(-i '' -E)
+else
+  SED_INPLACE=(-i -E)
+fi
+
+# Check if version starts with "v"
+if [[ ! ${usage_version?} == v* ]]; then
+  echo "WARNING: version tags usually start with 'v'. You provided '${usage_version?}'. Are you sure you want to continue? (y/n)"
+  read -r response
+  if [[ ! "$response" == "y" ]]; then
+    echo "Aborted by user"
+    exit 1
+  fi
+fi
+
+# Update Tigera Operator manifests
+curl -sS --fail "https://raw.githubusercontent.com/projectcalico/calico/${usage_version?}/manifests/tigera-operator.yaml" --output operator/tigera-operator.yaml
+# Patch the Tigera Operator manifests to set -manage-crds=false flag
+# Get the index of the container and of the flag and in the arguments list using yq so we can patch it with kustomize later
+# This is needed because the position of the flag may change between versions, and we want to ensure we are patching the correct flag
+container_index=$(yq e '.spec.template.spec.containers | to_entries[] | select(.value.name == "tigera-operator") | .key' operator/tigera-operator.yaml)
+flag_index=$(yq e '.spec.template.spec.containers['"${container_index}"'].args | to_entries[] | select(.value == "-manage-crds=true") | .key' operator/tigera-operator.yaml)
+if [[ -z "$flag_index" ]]; then
+  echo "ERROR: Could not find -manage-crds=true flag in the Tigera Operator manifests. Please check the manifest structure and update the flag index accordingly."
+  exit 1
+fi
+# Generate the JSON patch with the correct indices
+cat > operator/patches/manage-crds-patch.json <<EOF
+[
+  {
+    "op": "replace",
+    "path": "/spec/template/spec/containers/${container_index}/args/${flag_index}",
+    "value": "-manage-crds=false"
+  }
+]
+EOF
+
+# Update the CRDs.
+curl -sS --fail "https://raw.githubusercontent.com/projectcalico/calico/${usage_version}/manifests/operator-crds.yaml" --output operator/operator-crds.yaml
+#curl -sS --fail "https://raw.githubusercontent.com/projectcalico/calico/${usage_version}/manifests/v1_crd_projectcalico_org.yaml" --output operator/operator-crds.yaml
+# curl -sS --fail "https://raw.githubusercontent.com/projectcalico/calico/${usage_version?}/manifests/v3_projectcalico_org.yaml" --output operator/operator-crds.yaml
+
+# Update the dummy deployment versions
+sed "${SED_INPLACE[@]}" "s|image: registry.sighup.io/fury/(.*):(.*)|image: registry.sighup.io/fury/\1:${usage_version?}|g" operator/dummy-dictionary-calico-images.yaml
+# Re-add license headers
+mise run add-license
+
+
+echo "✅ Updated Calico to version ${usage_version?}"
+tigera_operator_version=$(grep "quay.io/tigera/operator" operator/tigera-operator.yaml | awk -F: '{print $3}')
+echo "✅ Updated Tigera Operator to version ${tigera_operator_version?}"
+
+# Update dashboards
+# we split the upstream file and store only the json files and change the UID of the prometheus datasource that does not exist in our installations
+curl -sSL --fail https://raw.githubusercontent.com/projectcalico/calico/${usage_version?}/manifests/grafana-dashboards.yaml | yq '.data["felix-dashboard.json"]' | sed 's/calico-demo-prometheus/prometheus/g; s/P11C5FC3F3B681947/prometheus/g' | jq > ./on-prem/monitoring/dashboards/felix-dashboard.json
+curl -sSL --fail https://raw.githubusercontent.com/projectcalico/calico/${usage_version?}/manifests/grafana-dashboards.yaml | yq '.data["typha-dashboard.json"]' | sed 's/calico-demo-prometheus/prometheus/g; s/P11C5FC3F3B681947/prometheus/g' | jq > ./on-prem/monitoring/dashboards/typha-dashboard.json
+echo "✅ Updated Dashboard files"
+echo
+echo "
+Check the release notes for both the Tigera Operator and Calico:
+- https://github.com/projectcalico/calico/blob/release-${usage_version?}/release-notes/v${usage_version?}-release-notes.md
+- https://github.com/tigera/operator/releases/tag/${tigera_operator_version?}
+"
+'''
