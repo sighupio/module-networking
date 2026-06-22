@@ -76,9 +76,7 @@ cluster-pool-ipv4-mask-size=24
 - ServiceMonitors for Prometheus integration
 - Hubble observability components (relay, UI)
 - **Minimal customizations** as of v1.18.1:
-  - **Grafana dashboard** - Custom dashboard for network metrics visualization
   - **cert-manager Issuer** - Required for TLS certificate generation
-  - **Hubble configuration** - Additional settings via ConfigMapGenerator
 
 ## Deployment
 

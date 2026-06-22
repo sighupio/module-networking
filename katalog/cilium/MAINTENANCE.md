@@ -7,11 +7,12 @@ To update the Cilium package with upstream, please follow the next steps.
 1.1. Download the upstream manifests
 
 ```bash
-helm repo add cilium https://helm.cilium.io/
-helm repo update
-helm search repo cilium/cilium
-helm pull cilium/cilium --version 1.18.7 --untar --untardir /tmp
+helm pull oci://quay.io/cilium/charts/cilium --version 1.18.11 --untar --untardir /tmp
 ```
+
+> [!IMPORTANT]
+> We stay in Cilium 1.18.x until this issue gets fixed or we move away from kubelet in IPVS mode:
+> https://github.com/cilium/cilium/issues/44464
 
 1.2. Compare the `MAINTENANCE.values.yaml` with the one from the chart `/tmp/cilium/values.yaml` and port the changes that are needed. For example, update the image tags and check that parameters that were in use are still valid.
 
@@ -45,9 +46,26 @@ helm template cilium /tmp/cilium \
 dyff between --ignore-whitespace-changes --ignore-order-changes resources/deploy.yaml upstream.yaml
 ```
 
+2.3. Run e2e-locally (make sure you have Docker running):
+
+```bash
+mise run e2e-cilium
+```
+
+> [!NOTE]
+> The Kind cluster used for the e2e tests is configured to use kube-proxy in IPVS
+> mode, following the default for on-Premises installer.
+>
+> Check that this is still the case because we are switching to NFTables mode.
+>
+> See for more details:
+>
+> - https://github.com/sighupio/installer-on-premises/issues/158
+> - https://github.com/sighupio/installer-on-premises/pull/168
+> - The `/katalog/tests/kind/config.yml` file
+
 ### Expected differences with upstream in the Hubble package
 
 Our customizations are minimal and focused on essential additions:
 
-- **Grafana dashboards** - Not included in upstream Helm chart. We add them via Kustomize in `monitoring/`.
 - **Issuer resources** - Upstream provides Certificate resources but expects the `hubble-issuer` to exist. We provide the Issuer and CA certificate in `resources/pki.yaml`.

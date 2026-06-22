@@ -6,6 +6,7 @@ kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 networking:
   disableDefaultCNI: true # Essential: Let CNI modules (Tigera/Cilium) handle networking
+  kubeProxyMode: "ipvs" # Testing with IPVS as it is the default on the OnPremises Installer
 # Multi-node cluster for realistic CNI testing
 # - Tests inter-node pod communication
 # - Tests network policies spanning multiple nodes
