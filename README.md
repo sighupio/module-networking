@@ -51,21 +51,21 @@ Check the [compatibility matrix][compatibility-matrix] for additional informatio
 
 ### Configuration
 
-You configure the module under `spec.distribution.modules.networking` in your `furyctl.yaml`. The `type` field selects the CNI plugin to deploy: `calico` (Tigera Operator) or `cilium` (on `KFDDistribution` you can also set `none` when the CNI is managed outside this module). You must also set the pod CIDR for the selected CNI. The other fields are optional and fall back to sensible defaults.
+You configure the module under `spec.distribution.modules.networking` in your `furyctl.yaml`. The `type` field selects the CNI plugin to deploy: `calico` (Tigera Operator) or `cilium` (on `KFDDistribution` you can also set `none` when the CNI is managed outside this module). The other fields are optional and fall back to sensible defaults.
+
+On an **`OnPremises`** cluster `furyctl` manages the Kubernetes phase too, so the pod CIDR is taken from the cluster's `spec.kubernetes` configuration and the `podCidr`/`maskSize` fields are optional:
 
 ```yaml
 apiVersion: kfd.sighup.io/v1alpha2
-kind: KFDDistribution
+kind: OnPremises
 spec:
   distribution:
     modules:
       networking:
         type: calico
-        tigeraOperator:
-          podCidr: 10.244.0.0/16
 ```
 
-To use Cilium instead of Calico, set `type: cilium` and configure the `cilium` block:
+On a **`KFDDistribution`** cluster (an already existing cluster, with no Kubernetes phase managed by `furyctl`) you set the pod CIDR explicitly when using Cilium:
 
 ```yaml
 apiVersion: kfd.sighup.io/v1alpha2
