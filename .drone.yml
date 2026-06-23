@@ -138,7 +138,7 @@ steps:
     depends_on:
       - Create Kind Cluster
     commands:
-      - mise use bats@$${BATS_VERSION} kubectl@$${KUBECTL_VERSION} kustomize@5.6.0
+      - mise use bats@$${BATS_VERSION} kubectl@$${KUBECTL_VERSION} kustomize@5.6.0 kapp@0.65.0
       - eval "$(mise activate bash --shims)"
       - ./scripts/run-cilium-tests.sh
 
@@ -229,7 +229,7 @@ steps:
     depends_on:
       - Create Kind Cluster
     commands:
-      - mise use bats@$${BATS_VERSION} kubectl@$${KUBECTL_VERSION} kustomize@5.6.0
+      - mise use bats@$${BATS_VERSION} kubectl@$${KUBECTL_VERSION} kustomize@5.6.0 kapp@0.65.0
       - eval "$(mise activate bash --shims)"
       - ./scripts/run-cilium-tests.sh
 
@@ -320,7 +320,7 @@ steps:
     depends_on:
       - Create Kind Cluster
     commands:
-      - mise use bats@$${BATS_VERSION} kubectl@$${KUBECTL_VERSION} kustomize@5.6.0
+      - mise use bats@$${BATS_VERSION} kubectl@$${KUBECTL_VERSION} kustomize@5.6.0 kapp@0.65.0
       - eval "$(mise activate bash --shims)"
       - ./scripts/run-tigera-tests.sh
 
@@ -411,7 +411,7 @@ steps:
     depends_on:
       - Create Kind Cluster
     commands:
-      - mise use bats@$${BATS_VERSION} kubectl@$${KUBECTL_VERSION} kustomize@5.6.0
+      - mise use bats@$${BATS_VERSION} kubectl@$${KUBECTL_VERSION} kustomize@5.6.0 kapp@0.65.0
       - eval "$(mise activate bash --shims)"
       - ./scripts/run-tigera-tests.sh
 
@@ -502,7 +502,7 @@ steps:
     depends_on:
       - Create Kind Cluster
     commands:
-      - mise use bats@$${BATS_VERSION} kubectl@$${KUBECTL_VERSION} kustomize@5.6.0
+      - mise use bats@$${BATS_VERSION} kubectl@$${KUBECTL_VERSION} kustomize@5.6.0 kapp@0.65.0
       - eval "$(mise activate bash --shims)"
       - ./scripts/run-cilium-tests.sh
 
@@ -593,7 +593,7 @@ steps:
     depends_on:
       - Create Kind Cluster
     commands:
-      - mise use bats@$${BATS_VERSION} kubectl@$${KUBECTL_VERSION} kustomize@5.6.0
+      - mise use bats@$${BATS_VERSION} kubectl@$${KUBECTL_VERSION} kustomize@5.6.0 kapp@0.65.0
       - eval "$(mise activate bash --shims)"
       - ./scripts/run-tigera-tests.sh
 
@@ -684,7 +684,7 @@ steps:
     depends_on:
       - Create Kind Cluster
     commands:
-      - mise use bats@$${BATS_VERSION} kubectl@$${KUBECTL_VERSION} kustomize@5.6.0
+      - mise use bats@$${BATS_VERSION} kubectl@$${KUBECTL_VERSION} kustomize@5.6.0 kapp@0.65.0
       - eval "$(mise activate bash --shims)"
       - ./scripts/run-cilium-tests.sh
 
@@ -775,7 +775,7 @@ steps:
     depends_on:
       - Create Kind Cluster
     commands:
-      - mise use bats@$${BATS_VERSION} kubectl@$${KUBECTL_VERSION} kustomize@5.6.0
+      - mise use bats@$${BATS_VERSION} kubectl@$${KUBECTL_VERSION} kustomize@5.6.0 kapp@0.65.0
       - eval "$(mise activate bash --shims)"
       - ./scripts/run-tigera-tests.sh
 
