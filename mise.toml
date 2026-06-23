@@ -16,6 +16,7 @@ kapp = "0.65.0"     # For GitOps-style deployments
 "ubi:google/addlicense" = "v1.1.1"     
 stern = "1.33.0"
 cilium-cli = "0.18.9"
+calicoctl = "3.31.6"
 
 # Development task definitions
 [tasks.add-license]

@@ -2,7 +2,6 @@
 # Use of this source code is governed by a BSD-style
 # license that can be found in the LICENSE file.
 
----
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
@@ -13,4 +12,11 @@ resources:
 images:
   - name: quay.io/tigera/operator
     newName: registry.sighup.io/fury/tigera/operator
-    newTag: v1.40.3
+
+patches:
+  # Patch to set -manage-crds=false in the Tigera Operator deployment
+  - path: patches/manage-crds-patch.json
+    target:
+      kind: Deployment
+      name: tigera-operator
+      namespace: tigera-operator

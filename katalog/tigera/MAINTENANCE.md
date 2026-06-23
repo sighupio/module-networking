@@ -7,45 +7,46 @@ Tigera operator manifests files are taken as-is from upstream.
 Here are the installation notes:
 <https://projectcalico.docs.tigera.io/getting-started/kubernetes/self-managed-onprem/onpremises>
 
-To update the YAML file, run the following command:
+Here are the upgrade considerations:
+<https://docs.tigera.io/calico/latest/operations/upgrading/kubernetes-upgrade>
+
+To update the package contents to a specific version from upstream, run the following command:
 
 ```bash
-# assuming katalog/tigera is the root of the repository
-export CALICO_VERSION="3.30.3"
-curl "https://raw.githubusercontent.com/projectcalico/calico/v${CALICO_VERSION}/manifests/tigera-operator.yaml" --output operator/tigera-operator.yaml
-
-# Update the CRDs.
-curl "https://raw.githubusercontent.com/projectcalico/calico/v${CALICO_VERSION}/manifests/operator-crds.yaml" --output operator/operator-crds.yaml
+mise run maintenance v3.31.6 # Keep this value updated so the next maintainer knows which vesion was used the last time.
 ```
 
-We're diverging from upstream by managing the CRDs ourselves, without relying on the operator to handle them. For this reason, make sure that the .spec.template.spec.containers[0].args[0] = "-manage-crds=false". Replace 0 with the actual index of the container regarding the quay.io/tigera/operator image.
+### Customizations
 
-Please make sure to update the images inside the `dummy-dictionary-calico-images.yaml`.
+The Operator is patched via Kustomize to:
+
+- Change the `-manage-crds=true` flag to `-manage-crds=false` in the operator container arguments. We're managing the CRDs ourselves, without relying on the operator to handle them.
+- Use the image from SIGHUP's registry.
+
+There's a fake deployment with zero replicas in the `dummy-dictionary-calico-images.yaml` file to get our CVE-patching pipeline to detect these images that don't appear anywhere in the manifests, despite being started by the Tigera Operator.
+
 Keep an eye on [this document](https://docs.tigera.io/calico/latest/operations/image-options/imageset#create-an-imageset) to have an idea of the needed images.
 
-This fake deployment with zero replicas is a hack to get our CVE-patching pipeline to detect these images that don't appear anywhere in the manifests, despite being started by the Tigera Operator.
+## On-premises
 
-The custom SIGHUP registry is passed to the Tigera Opeator using the `Installation` object
-found in the `custom-resources.yaml` manifest.
+For managed on-premises installations, in addition to the operator, you need to create a custom resource with the CNI configuration.
 
-## On-prem
-
-For managed on-prem installations, in addition to the operator you need to create a custom resource with the CNI configuration.
+Our CNI configuration file (`on-prem/custom-resources.yaml`) has been generated starting from an example from Tigera.
 
 Here is the documentation
 <https://projectcalico.docs.tigera.io/getting-started/kubernetes/self-managed-onprem/onpremises>
 
-To download the default configuration from upstream and update the file use the following commands:
+If you need for some reason to download the default configuration from upstream, use the following commands:
 
 ```bash
 # assuming katalog/tigera is the root of the repository
-export CALICO_VERSION="3.30.3"
+export CALICO_VERSION="3.31.6"
 curl https://raw.githubusercontent.com/projectcalico/calico/v${CALICO_VERSION}/manifests/custom-resources.yaml --output on-prem/custom-resources.yaml
 ```
 
 ### Customizations
 
-The on-prem resources file from upstream has been edited with the following:
+The on-prem example file from upstream has been edited with the following:
 
 - Use SIGHUP's registry
 - Deleted the `calicoNetwork` section included in the upstream configuration file, the Operator should detect the CIDR from the cluster's installation and set it accordingly.
@@ -55,19 +56,14 @@ The on-prem resources file from upstream has been edited with the following:
 
 There are some custom headless services and service monitors defined as part of the kustomize project for the on-prem variant.
 
-The dashbaords are the official ones with some minor tuning.
+The custom files have been created following the official documentation: [Monitor Calico component metrics](https://docs.tigera.io/calico/latest/operations/monitor/monitor-component-metrics)
 
-To get the dashboards you can use the following commands:
+The dashboards are the official ones with some minor tuning for the Prometheus datasource. They are updated automatically as part of the `maintenance` mise task.
 
-```bash
-# ⚠️ Assuming $PWD == root of the project
-export CALICO_VERSION="3.30.3"
-# we split the upstream file and store only the json files
-curl -L https://raw.githubusercontent.com/projectcalico/calico/v${CALICO_VERSION}/manifests/grafana-dashboards.yaml | yq '.data["felix-dashboard.json"]' | sed 's/calico-demo-prometheus/prometheus/g' | jq > ./on-prem/monitoring/dashboards/felix-dashboard.json
-curl -L https://raw.githubusercontent.com/projectcalico/calico/v${CALICO_VERSION}/manifests/grafana-dashboards.yaml | yq '.data["typha-dashboard.json"]' | sed 's/calico-demo-prometheus/prometheus/g' | jq > ./on-prem/monitoring/dashboards/typa-dashboard.json
-```
+> [!TIP]
+> Check that there are no new dashboards included upstream that may need to be added to the maintenance task,
 
-##### ServiceMonitor job label
+#### ServiceMonitor job label
 
 The upstream Typha dashboard queries metrics with `job="typha_metrics"`. The ServiceMonitor in `monitoring/sm.yaml` uses `jobLabel: k8s-app` which produces `job="calico-typha"`. A relabeling override is applied to fix this:
 
@@ -94,7 +90,7 @@ The alerts included are inspired in Platform9's and Sysdig's, see:
 - <https://docs.sysdig.com/en/docs/sysdig-monitor/monitoring-integrations/application-integrations/calico/>
 - <https://docs.sysdig.com/en/docs/sysdig-monitor/monitoring-integrations/application-integrations/calico/#errors>
 
-You can generate a markdown table with the rules to include it in the readme with the following commad:
+You can generate a markdown table with the rules to include it in the Readme file with the following command:
 
 ```bash
  yq e '.spec.groups[] | .rules[] |  "| " + .alert + " | " + (.annotations.summary // "-" | sub("\n",". "))+ " | " + (.annotations.description // "-" | sub("\n",". ")) + " |"' katalog/tigera/on-prem/monitoring/prometheusrules.yaml
@@ -102,13 +98,14 @@ You can generate a markdown table with the rules to include it in the readme wit
 
 ## EKS Policy-only mode
 
-The policy only mode definition YAML is taken from EKS documentation:
+Follow this documentation:
+<https://docs.tigera.io/calico/latest/getting-started/kubernetes/managed-public-cloud/eks>
+
+The policy only mode definition YAML was originally taken from EKS documentation, that does not exist anymore:
 <https://docs.aws.amazon.com/eks/latest/userguide/calico.html>
 
-Notice that the manifests are not maintained anymore by AWS.
-
-The definition file has been downloaded from:
+The definition file was downloaded from:
 <https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/master/config/master/calico-crs.yaml>
 
-for more information see:
-<https://docs.tigera.io/calico-enterprise/latest/reference/installation/api#operator.tigera.io/v1.CNISpec>
+For more information see:
+<https://docs.tigera.io/calico-enterprise/latest/reference/installation/api#operator.tig

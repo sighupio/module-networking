@@ -2,11 +2,12 @@
 
 Welcome to the latest release of the `Networking` module of [`SIGHUP Distribution`](https://github.com/sighupio/distribution) maintained by team SIGHUP by ReeVo.
 
-## Component Images 🚢
+## Packages version 🚢
 
-| Component         | Supported Version                                                                | Previous Version |
+| Component         | Current Version                                                                  | Previous Version |
 | ----------------- | -------------------------------------------------------------------------------- | ---------------- |
 | `cilium`          | [`v1.18.11`](https://github.com/cilium/cilium/releases/tag/v1.18.11)             | v1.18.7          |
+| `tigera-operator` | [`v1.40.13`](https://github.com/tigera/operator/releases/tag/v1.40.13)           | v1.40.3          |
 
 ## Bug fixes 🐞
 
