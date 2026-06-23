@@ -1,107 +1,35 @@
 # Cilium
 
-<!-- <KFD-DOCS> -->
+<!-- <SD-DOCS> -->
 
-**Cilium** is an open source, cloud native solution for providing, securing, and observing network connectivity between
-workloads, fueled by the revolutionary Kernel technology eBPF.
+## Overview
 
-> For more information about Cilium refer to [cilium documentation][cilium-documentation]
-
-The deployment of Cilium consists of a DaemonSet running on all nodes, and an operator Deployment.
-Additionally, we deploy the Hubble component as an observability tool on the network connections in the cluster.
+Cilium is an open source, cloud native solution for providing, securing and observing network connectivity between workloads, fueled by the eBPF kernel technology. In the Networking Module it is deployed as a DaemonSet running on all nodes plus an operator Deployment, together with the Hubble observability components. Cilium is configured in IPAM Cluster Scope mode.
 
 > [!IMPORTANT]
-> Please notice that the Cilium package default configuration is for cluster with less than 200 nodes.
-
-## Image repository and tag
-
-- cilium images:
-  - `registry.sighup.io/fury/cilium/cilium`
-  - `registry.sighup.io/fury/cilium/operator-generic`
-  - `registry.sighup.io/fury/cilium/hubble-ui-backend`
-  - `registry.sighup.io/fury/cilium/hubble-ui`
-  - `registry.sighup.io/fury/cilium/hubble-relay`
-
-## Requirements
-
-- Kubernetes >= `1.29.X`.
-- Kustomize >= `v5.6.0`.
-- [prometheus-operator from SD Monitoring module][prometheus-operator]
-- [cert-manager from SD Ingress module][cert-manager]
-
-## Configuration
-
-The Cilium package is deployed with the following configuration:
-
-- Cilium configured in IPAM Cluster Scope [The default one](https://docs.cilium.io/en/v1.13/network/concepts/ipam/cluster-pool/)
-- Default pod CIDR: 10.0.0.0/8
-- Default netmask per node: 24
+> The default Cilium configuration targets clusters with less than 200 nodes.
 
 > [!WARNING]
-> Make sure to change the Default pod CIDR if it's conflicting with your network otherwise if your node network is in
-> the same range you will lose connectivity to other nodes.
+> Make sure the pod CIDR does not conflict with your node network: if they overlap you may lose connectivity between nodes.
 
-To change the default pod CIDR you can use the following kustomize patch:
+## Upstream project
 
-`kustomization.yaml`
-
-```yaml
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-
-namespace: kube-system
-
-configMapGenerator:
-  - name: cilium-config
-    behavior: merge
-    namespace: kube-system
-    envs:
-      - patches/cilium-cidr.env
-```
-
-`patches/cilium-cidr.env`
-
-```dotenv
-cluster-pool-ipv4-cidr=10.100.0.0/8
-cluster-pool-ipv4-mask-size=24
-```
-
-> [!NOTE]
-> The CIDR used by Cilium can be different from the one used by Kubeadm.
-
-## Architecture and Customizations
-
-- Base Cilium CNI installation
-- Cilium operator for managing network policies
-- ServiceMonitors for Prometheus integration
-- Hubble observability components (relay, UI)
-- **Minimal customizations** as of v1.18.1:
-  - **cert-manager Issuer** - Required for TLS certificate generation
+This package is based on the upstream [Cilium][cilium-github].
 
 ## Deployment
 
-You can deploy Cilium by running the following command in the root of this package:
+This package is deployed as part of **Networking Module** when you create a cluster with `furyctl` and `spec.distribution.modules.networking.type` is set to `cilium`.
 
-```bash
-kustomize build . | kubectl apply -f -
-```
+You can customize it (for example the pod CIDR and the per-node mask size) under `spec.distribution.modules.networking.cilium` in your `furyctl.yaml`. See the [module documentation](../../README.md) and the configuration reference ([KFDDistribution][schema-reference-kfd], [OnPremises][schema-reference-onprem]) for the available options.
 
-> [!IMPORTANT]
-> The new single package introduces a cyclic dependency between Cilium and cert-manager. Hubble (deployed together with Cilium) requires cert-manager, and cert-manager requires at least some nodes to be ready (CNI working) to be scheduled.
->
-> You may need to adjust your deployment strategy while switching to the unified package.
->
-> For example, if you are using a tool that verifies dependencies (like Carvel `kapp`) you may apply cert-manager and cilium together in the same `kapp deploy` command.
->
-> If you are using plain `kubectl apply` instead, you will see some messages saying that the resources that require cert-manager (like `Certificate`, `Issuer`, etc.) are not being deployed. You will need to re-apply the cilium package after you've deployed cert-manager so Hubble works.
+<!-- Links -->
 
-<!-- LINKS -->
-[cilium-documentation]: https://docs.cilium.io/en/stable/
-[prometheus-operator]: https://github.com/sighup-io/fury-kubernetes-monitoring/blob/master/katalog/prometheus-operator
-[cert-manager]: https://github.com/sighup-io/fury-kubernetes-ingress/blob/master/katalog/cert-manager
+[cilium-github]: https://github.com/cilium/cilium
+[schema-reference-kfd]: https://docs.sighup.io/docs/reference/kfddistribution#specdistributionmodulesnetworking
+[schema-reference-onprem]: https://docs.sighup.io/docs/reference/onpremises#specdistributionmodulesnetworking
 
-<!-- </KFD-DOCS> -->
+<!-- </SD-DOCS> -->
 
 ## License
 
-For license details please see [LICENSE](./../../LICENSE)
+For license details please see [LICENSE](../../LICENSE)
