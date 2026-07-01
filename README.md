@@ -9,30 +9,28 @@
 </h1>
 <!-- markdownlint-enable MD033 -->
 
-![Release](https://img.shields.io/badge/Latest%20Release-v3.1.0-blue)
+![Release](https://img.shields.io/badge/Latest%20Release-v4.0.0-blue)
 ![License](https://img.shields.io/github/license/sighupio/module-networking?label=License)
 ![Slack](https://img.shields.io/badge/slack-@kubernetes/fury-yellow.svg?logo=slack&label=Slack)
 
-<!-- <KFD-DOCS> -->
+<!-- <SD-DOCS> -->
 
-**Networking Module** implements in-cluster networking functionality for the [SIGHUP Distribution (SD)][skd-repo] via Container Network Interface (CNI) plugins.
+**Networking Module** implements in-cluster networking for [SIGHUP Distribution (SD)][kfd-repo] via Container Network Interface (CNI) plugins.
 
-If you are new to SD please refer to the [official documentation][skd-docs] on how to get started with SD.
+If you are new to SD please refer to the [official documentation][kfd-docs] on how to get started with SD.
 
 ## Overview
 
-Kubernetes has adopted the Container Network Interface (CNI) specification for managing network resources on a cluster.
-
-**Networking Module** makes use of CNCF Projects [Tigera Calico](https://www.projectcalico.org/) and [Cilium](https://cilium.io/), open-source networking and network security solutions for containers, virtual machines, and bare-metal workloads, to bring networking features to the SIGHUP Distribution.
+Kubernetes adopts the Container Network Interface (CNI) specification for managing network resources on a cluster. **Networking Module** uses the CNCF projects [Calico][tigera-page] (via the Tigera Operator) and [Cilium][cilium-page] — open-source networking and network security solutions for containers, virtual machines and bare-metal workloads — to bring networking capabilities to the distribution.
 
 ## Packages
 
-Networking Module provides the following packages:
+The following packages are included in Networking Module:
 
-| Package                    | Version                     | Description                                                                                                                                          |
-| -------------------------- | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [cilium](katalog/cilium)   | `1.18.11`                   | [Cilium][cilium-page] CNI Plugin. For cluster with `< 200` nodes.                                                                                    |
-| [tigera](katalog/tigera)   | `1.40.13` (Calico `3.31.6`) | [Tigera Operator][tigera-page], a Kubernetes Operator for Calico, provides pre-configured installations for on-prem and for EKS in policy-only mode. |
+| Package                  | Version                     | Description                                                                                                                                          |
+| ------------------------ | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [cilium](katalog/cilium) | `1.18.11`                   | [Cilium][cilium-page] CNI plugin. For clusters with `< 200` nodes.                                                                                   |
+| [tigera](katalog/tigera) | `1.40.13` (Calico `3.31.6`) | [Tigera Operator][tigera-page], a Kubernetes Operator for Calico, provides pre-configured installations for on-prem and for EKS in policy-only mode. |
 
 Click on each package to see its full documentation.
 
@@ -43,107 +41,75 @@ Click on each package to see its full documentation.
 | `1.32.x`           | :white_check_mark: | No known issues |
 | `1.33.x`           | :white_check_mark: | No known issues |
 | `1.34.x`           | :white_check_mark: | No known issues |
+| `1.35.x`           | :white_check_mark: | No known issues |
 
-Check the [compatibility matrix][compatibility-matrix] for additional information on previous releases of the module.
+Check the [compatibility matrix][compatibility-matrix] for additional information about previous releases of the module.
 
 ## Usage
 
-### Prerequisites
+**Networking Module** is part of SIGHUP Distribution (SD) and is deployed automatically by [`furyctl`][furyctl-repo] when you create or update a `KFDDistribution` or `OnPremises` cluster. You don't need to download, vendor or install its packages manually.
 
-| Tool                        | Version   | Description                                                                                                                                                      |
-| --------------------------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [furyctl][furyctl-repo]     | `>=0.6.0` | The recommended tool to download and manage SD modules and their packages. To learn more about `furyctl` read the [official documentation][furyctl-repo].       |
-| [kustomize][kustomize-repo] | `=3.5.3`  | Packages are customized using `kustomize`. To learn how to create your customization layer with `kustomize`, please refer to their [repository][kustomize-repo]. |
+### Configuration
 
-### Deployment with furyctl legacy
+You configure the module under `spec.distribution.modules.networking` in your `furyctl.yaml`. The `type` field selects the CNI plugin to deploy: `calico` (Tigera Operator) or `cilium` (on `KFDDistribution` you can also set `none` when the CNI is managed outside this module). The other fields are optional and fall back to sensible defaults.
 
-1. List the packages you want to deploy and their version in a `Furyfile.yml`
+On an **`OnPremises`** cluster `furyctl` manages the Kubernetes phase too, so the pod CIDR is taken from the cluster's `spec.kubernetes` configuration and the `podCidr`/`maskSize` fields are optional:
 
 ```yaml
-bases:
-  - name: networking
-    version: "v3.1.0"
+apiVersion: kfd.sighup.io/v1alpha2
+kind: OnPremises
+spec:
+  distribution:
+    modules:
+      networking:
+        type: calico
 ```
 
-> See `furyctl` [documentation][furyctl-repo] for additional details about `Furyfile.yml` format.
-
-2. Execute `furyctl vendor -H` to download the packages
-
-3. Inspect the download packages under `./vendor/katalog/networking`.
-
-4. Define a `kustomization.yaml` that includes the `./vendor/katalog/networking` directory as a resource.
+On a **`KFDDistribution`** cluster (an already existing cluster, with no Kubernetes phase managed by `furyctl`) you set the pod CIDR explicitly when using Cilium:
 
 ```yaml
-resources:
-  - ./vendor/katalog/networking/tigera/operator
-  - ./vendor/katalog/networking/tigera/on-prem
+apiVersion: kfd.sighup.io/v1alpha2
+kind: KFDDistribution
+spec:
+  distribution:
+    modules:
+      networking:
+        type: cilium
+        cilium:
+          podCidr: 10.0.0.0/8
+          maskSize: "24"
 ```
 
-Or if you want to use Cilium:
+See the configuration reference for your cluster kind for the full list of available options: [KFDDistribution][schema-reference-kfd] or [OnPremises][schema-reference-onprem].
 
-```yaml
-resources:
-  - ./vendor/katalog/networking/cilium
-```
-
-5. To deploy the packages to your cluster, execute:
-
-```bash
-kustomize build . | kubectl apply -f -
-```
-
-### Monitoring
-
-The Networking module includes out-of-the-box metrics monitoring and alerting features for its components.
-
-You can monitor the status of the networking stack from the provided Grafana dashboards:
-
-<!-- markdownlint-disable MD033 -->
-
-<a href="docs/images/screenshots/calico-felix-dashboard.png"><img src="docs/images/screenshots/calico-felix-dashboard.png" width="250"/></a>
-<a href="docs/images/screenshots/calico-typha-dashboard.png"><img src="docs/images/screenshots/calico-typha-dashboard.png" width="250"/></a>
-
-<!-- markdownlint-enable MD033 -->
-
-> click on each screenshot for the full screen version
-
-The following set of alerts is included with the networking module:
-
-| Alert Name                     | Summary                                                                 | Description                                                                                                                       |
-| ------------------------------ | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| CalicoDataplaneFailuresHigh    | A high number of dataplane failures within Felix are happening          | Calico node pod {{ $labels.pod }} ({{ $labels.instance }}) has seen {{ $value }} dataplane failures within the last hour          |
-| CalicoIpsetErrorsHigh          | A high number of ipset errors within Felix are happening                | Calico node pod {{ $labels.pod }} ({{ $labels.instance }}) has seen {{ $value }} ipset errors within the last hour                |
-| CalicoIptableSaveErrorsHigh    | A high number of iptable save errors within Felix are happening         | Calico node pod {{ $labels.pod }} ({{ $labels.instance }}) has seen {{ $value }} iptable save errors within the last hour         |
-| CalicoIptableRestoreErrorsHigh | A high number of iptable restore errors within Felix are happening      | Calico node pod {{ $labels.pod }} ({{ $labels.instance }}) has seen {{ $value }} iptable restore errors within the last hour      |
-| CalicoErrorsWhileLoggingHigh   | A high number of errors within Felix while loggging are happening       | Calico node pod {{ $labels.pod }} ({{ $labels.instance }}) has seen {{ $value }} errors while logging within the last ten minutes |
-| TyphaPingLatency               | Typha Round-trip ping latency to client (cluster {{ $labels.cluster }}) | Typha latency is growing (ping operations > 100ms). VALUE = {{ $value }}. LABELS = {{ $labels }}                                  |
-| TyphaClientWriteLatency        | Typha unusual write latency (instance {{ $labels.cluster }})            | Typha client latency is growing (write operations > 100ms). VALUE = {{ $value }}. LABELS = {{ $labels }}                          |
-| TyphaErrorsWhileLoggingHigh    | A high number of errors within Typha while loggging are happening       | Typha pod {{ $labels.pod }} ({{ $labels.instance }}) has seen {{ $value }} errors while logging within the last ten minutes       |
+To install SD from scratch, follow the [Getting started][getting-started] guide.
 
 <!-- Links -->
 
 [cilium-page]: https://github.com/cilium/cilium
 [tigera-page]: https://github.com/projectcalico/calico
-[skd-repo]: https://github.com/sighupio/distribution
+[kfd-repo]: https://github.com/sighupio/distribution
 [furyctl-repo]: https://github.com/sighupio/furyctl
-[kustomize-repo]: https://github.com/kubernetes-sigs/kustomize
-[skd-docs]: https://docs.kubernetesfury.com/docs/distribution/
-[compatibility-matrix]: https://github.com/sighupio/module-networking/blob/master/docs/COMPATIBILITY_MATRIX.md
+[kfd-docs]: https://docs.sighup.io/docs/distribution/
+[schema-reference-kfd]: https://docs.sighup.io/docs/reference/kfddistribution#specdistributionmodulesnetworking
+[schema-reference-onprem]: https://docs.sighup.io/docs/reference/onpremises#specdistributionmodulesnetworking
+[getting-started]: https://docs.sighup.io/docs/getting-started/
+[compatibility-matrix]: https://github.com/sighupio/module-networking/blob/main/docs/COMPATIBILITY_MATRIX.md
 
-<!-- </KFD-DOCS> -->
+<!-- </SD-DOCS> -->
 
 <!-- <FOOTER> -->
 
 ## Contributing
 
-Before contributing, please read first the [Contributing Guidelines](docs/CONTRIBUTING.md).
+Before contributing, please read first the [Contributing Guidelines](https://github.com/sighupio/distribution/blob/main/docs/CONTRIBUTING.md).
 
 ### Reporting Issues
 
-In case you experience any problems with the module, please [open a new issue](https://github.com/sighupio/module-networking/issues/new/choose).
+In case you experience any problem with the module, please [open a new issue](https://github.com/sighupio/module-networking/issues/new/choose).
 
 ## License
 
-This module is open-source and it's released under the following [LICENSE](LICENSE)
+This module is open-source and it's released under the following [LICENSE](LICENSE).
 
 <!-- </FOOTER> -->
