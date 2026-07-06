@@ -1,34 +1,33 @@
-# Tigera Package
+# Tigera
 
-The Tigera package provides the Tigera Operator, a Kubernetes Operator for Calico, and some ready to go configurations to enable Networking capabilities for a Kubernetes cluster.
+<!-- <SD-DOCS> -->
 
-## Tigera Operator
+## Overview
 
-The Tigera Operator handles the installation and life-cycle of the Calico CNI.
+The Tigera package provides the Tigera Operator, a Kubernetes Operator that handles the installation and life-cycle of the [Calico][calico-github] CNI. It ships ready-to-go configurations for two scenarios:
 
-### On-premises installation
+- **On-premises**: the operator deploys and configures Calico as the cluster CNI.
+- **EKS policy-only mode**: the operator runs only to enforce network policies (the CNI features are disabled), leaving the AWS CNI in place.
 
-To install the Tigera operator in an empty on-premises cluster run the following command:
+## Upstream project
 
-1. Deploy the `on-prem` package, it will deploy both the Operator and the configuration needed to set up Calico CNI:
+This package is based on the upstream [Calico][calico-github] and its [Tigera Operator][tigera-github].
 
-```bash
-kustomize build katalog/tigera/on-prem | kubectl apply -f - --server-side
-```
+## Deployment
 
-If you would like to customize the installation, patch the `tigera/on-prem/custom-resources.yaml` your desired configuration. See the [official documentation](https://projectcalico.docs.tigera.io/getting-started/kubernetes/installation/config-options) for details.
+This package is deployed as part of **Networking Module** when you create a cluster with `furyctl` and `spec.distribution.modules.networking.type` is set to `calico`. The right configuration (on-premises CNI or EKS policy-only mode) is selected automatically based on the cluster.
 
-### EKS Policy-only mode installation
+You can customize it (for example the pod CIDR and block size) under `spec.distribution.modules.networking.tigeraOperator` in your `furyctl.yaml`. See the [module documentation](../../README.md) and the configuration reference ([KFDDistribution][schema-reference-kfd], [OnPremises][schema-reference-onprem]) for the available options.
 
-The `eks-policy-mode` package is used to run the Tigera Operator for enforcing network policies -and not as CNI- in a EKS cluster.
+<!-- Links -->
 
-The policy only mode will install the operator and configure it to not enable the CNI features.
+[calico-github]: https://github.com/projectcalico/calico
+[tigera-github]: https://github.com/tigera/operator
+[schema-reference-kfd]: https://docs.sighup.io/docs/reference/kfddistribution#specdistributionmodulesnetworking
+[schema-reference-onprem]: https://docs.sighup.io/docs/reference/onpremises#specdistributionmodulesnetworking
 
-To install it run the following command:
+<!-- </SD-DOCS> -->
 
-```bash
-kustomize build katalog/tigera/policy-only | kubectl apply -f - --server-side
-```
+## License
 
-> Note that you can also completely replace the AWS CNI with Calico if you need to:
-> <https://projectcalico.docs.tigera.io/getting-started/kubernetes/managed-public-cloud/eks>
+For license details please see [LICENSE](../../LICENSE)
