@@ -13,7 +13,7 @@ Here are the upgrade considerations:
 To update the package contents to a specific version from upstream, run the following command:
 
 ```bash
-mise run maintenance v3.31.6 # Keep this value updated so the next maintainer knows which vesion was used the last time.
+mise run maintenance v3.32.2 # Keep this value updated so the next maintainer knows which version was used the last time.
 ```
 
 ### Customizations
