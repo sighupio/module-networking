@@ -45,12 +45,12 @@ echo "✅ Development environment ready!"
 '''
 
 [tasks.e2e-tigera]
-description = "Run Tigera E2E test suite with Kind cluster (K8s 1.35)"
+description = "Run Tigera E2E test suite with Kind cluster (K8s 1.36.4)"
 run = '''
 #!/bin/bash
 set -e
 echo "🚀 Running Tigera E2E workflow..."
-./scripts/create-e2e-cluster.sh tigera 1.35.0
+./scripts/create-e2e-cluster.sh tigera 1.36.4
 ./scripts/run-tigera-tests.sh
 ./scripts/cleanup-e2e-cluster.sh tigera
 echo "✅ Tigera E2E workflow completed!"
