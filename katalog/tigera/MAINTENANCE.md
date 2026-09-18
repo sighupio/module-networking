@@ -40,8 +40,8 @@ If you need for some reason to download the default configuration from upstream,
 
 ```bash
 # assuming katalog/tigera is the root of the repository
-export CALICO_VERSION="3.31.6"
-curl https://raw.githubusercontent.com/projectcalico/calico/v${CALICO_VERSION}/manifests/custom-resources.yaml --output on-prem/custom-resources.yaml
+export CALICO_VERSION="3.32.2"
+curl https://raw.githubusercontent.com/projectcalico/calico/refs/tags/v${CALICO_VERSION}/manifests/custom-resources.yaml --output on-prem/custom-resources.yaml
 ```
 
 ### Customizations
@@ -50,7 +50,7 @@ The on-prem example file from upstream has been edited with the following:
 
 - Use SIGHUP's registry
 - Deleted the `calicoNetwork` section included in the upstream configuration file, the Operator should detect the CIDR from the cluster's installation and set it accordingly.
-- Calico ApiServer is not deployed by default by our installation.
+- Deploy the Calico API Server (`APIServer` CR). Since Calico v3.32 Goldmane, Whisker and the Tiers controller rely on the `projectcalico.org/v3` aggregated API served by the calico-apiserver, so it cannot be omitted anymore.
 
 ### Monitoring
 
