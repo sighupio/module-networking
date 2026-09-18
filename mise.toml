@@ -13,7 +13,7 @@ dyff = "1.12.0"
 kapp = "0.65.4"     # For GitOps-style deployments
 "ubi:google/addlicense" = "v1.2.0"
 stern = "1.34.0"
-cilium-cli = "0.18.11"
+cilium-cli = "0.18.9"
 calicoctl = "3.32.2"
 
 # Development task definitions
