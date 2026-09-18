@@ -8,15 +8,15 @@ metadata:
   name: deny-all
 spec:
   order: 2000
-  selector: projectcalico.org/namespace not in {'default', 'ingress-nginx', 'istio-system', 'kube-system', 'logging', 'monitoring', 'registry','gatekeeper-system','cert-manager'}
+  selector: projectcalico.org/namespace not in {'default', 'ingress-nginx', 'istio-system', 'kube-system', 'logging', 'monitoring', 'registry','gatekeeper-system','cert-manager','calico-system'}
   ingress:
     - action: Allow
       source:
-        namespaceSelector: projectcalico.org/name in {'default', 'ingress-nginx', 'istio-system', 'kube-system', 'logging', 'monitoring', 'registry','gatekeeper-system','cert-manager'}
+        namespaceSelector: projectcalico.org/name in {'default', 'ingress-nginx', 'istio-system', 'kube-system', 'logging', 'monitoring', 'registry','gatekeeper-system','cert-manager','calico-system'}
   egress:
     - action: Allow # System namespace traffic
       destination:
-        namespaceSelector: projectcalico.org/name in {'default', 'ingress-nginx', 'kube-system', 'istio-system', 'monitoring'}
+        namespaceSelector: projectcalico.org/name in {'default', 'ingress-nginx', 'kube-system', 'istio-system', 'monitoring','calico-system'}
 
   types:
     - Ingress
