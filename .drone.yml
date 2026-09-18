@@ -59,13 +59,13 @@ steps:
 
   - &check-deprecated-apis
     name: check-deprecated-apis-cilium
-    image: us-docker.pkg.dev/fairwinds-ops/oss/pluto:v5
+    image: us-docker.pkg.dev/fairwinds-ops/oss/pluto:v5.24.4
     pull: always
     depends_on:
       - Render Manifests
     commands:
       # we use --ignore-deprecations because we don't want the CI to fail when the API has not been removed yet.
-      - /pluto detect $${KUBERNETES_MANIFESTS} --ignore-deprecations --target-versions=k8s=v1.35.0
+      - /pluto detect $${KUBERNETES_MANIFESTS} --ignore-deprecations --target-versions=k8s=v1.36.0
     environment:
       KUBERNETES_MANIFESTS: cilium.yml
 

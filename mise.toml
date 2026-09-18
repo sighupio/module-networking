@@ -57,12 +57,12 @@ echo "✅ Tigera E2E workflow completed!"
 '''
 
 [tasks.e2e-cilium]
-description = "Run Cilium E2E test suite with Kind cluster (K8s 1.35)"
+description = "Run Cilium E2E test suite with Kind cluster (K8s 1.36.4)"
 run = '''
 #!/bin/bash
 set -e
 echo "🚀 Running Cilium E2E workflow..."
-./scripts/create-e2e-cluster.sh cilium 1.35.0
+./scripts/create-e2e-cluster.sh cilium 1.36.4
 ./scripts/run-cilium-tests.sh
 ./scripts/cleanup-e2e-cluster.sh cilium
 echo "✅ Cilium E2E workflow completed!"
@@ -71,11 +71,11 @@ echo "✅ Cilium E2E workflow completed!"
 # Individual E2E workflow components (following module-auth pattern)
 [tasks.e2e-create-cluster-tigera]
 description = "Create Kind cluster for Tigera E2E testing"
-run = "./scripts/create-e2e-cluster.sh tigera 1.35.0"
+run = "./scripts/create-e2e-cluster.sh tigera 1.36.4"
 
 [tasks.e2e-create-cluster-cilium]
 description = "Create Kind cluster for Cilium E2E testing"
-run = "./scripts/create-e2e-cluster.sh cilium 1.35.0"
+run = "./scripts/create-e2e-cluster.sh cilium 1.36.4"
 
 [tasks.e2e-run-tests-tigera]
 description = "Run Tigera E2E tests on existing cluster"
