@@ -25,8 +25,6 @@ kustomize build katalog/tigera/on-prem | kubectl apply -f -
 
 > [!IMPORTANT]
 > This release deploys the Calico API Server (new `calico-system/calico-apiserver` pods). Since Calico v3.32 the Goldmane, Whisker and Tiers components use the `projectcalico.org/v3` API served by it, so the `APIServer` resource is now required: without it the operator reports those components as degraded. It is part of `katalog/tigera/on-prem`, so applying the package takes care of it.
->
-> If you use `AdminNetworkPolicy` or `BaselineAdminNetworkPolicy`, migrate to `ClusterNetworkPolicy` before upgrading (see Breaking Changes).
 
 ### Cilium
 
