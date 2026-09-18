@@ -684,7 +684,7 @@ steps:
     depends_on:
       - Create Kind Cluster
     commands:
-      - mise use bats@$${BATS_VERSION} kubectl@$${KUBECTL_VERSION} kustomize@5.6.0 kapp@0.65.4 cilium-cli@0.18.11
+      - mise use bats@$${BATS_VERSION} kubectl@$${KUBECTL_VERSION} kustomize@5.6.0 kapp@0.65.4 cilium-cli@0.18.9
       - eval "$(mise activate bash --shims)"
       - ./scripts/run-cilium-tests.sh
 
