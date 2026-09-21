@@ -19,6 +19,7 @@ calicoctl = "3.32.2"
 
 [monorepo]
 config_roots = [
+    "katalog/cilium",
     "katalog/tigera"
 ]
 

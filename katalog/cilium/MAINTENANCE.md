@@ -2,7 +2,17 @@
 
 To update the Cilium package with upstream, please follow the next steps.
 
-## 1. Updating the values file
+## 1. Update the images
+
+Upgrade all the images running: 
+```
+mise run upgrade-images <chart_version>
+# For example
+mise run upgrade-images 1.18.11
+```
+
+
+## 2. Keep the helm-values file updated
 
 1.1. Download the upstream manifests
 
@@ -14,7 +24,7 @@ helm pull oci://quay.io/cilium/charts/cilium --version 1.18.11 --untar --untardi
 > We stay in Cilium 1.18.x until this issue gets fixed or we move away from kubelet in IPVS mode:
 > https://github.com/cilium/cilium/issues/44464
 
-1.2. Compare the `MAINTENANCE.values.yaml` with the one from the chart `/tmp/cilium/values.yaml` and port the changes that are needed. For example, update the image tags and check that parameters that were in use are still valid.
+1.2. Compare the `MAINTENANCE.values.yaml` with the one from the chart `/tmp/cilium/values.yaml` and port the changes that are needed. For example, check that parameters that were in use are still valid.
 
 > 💡 **TIP**
 > You can use a YAML and Kubernetes-aware tool like [Dyff](https://github.com/homeport/dyff) to compare the files. Dyff will help you to identify the differences between the manifests in a more human-readable way.
@@ -22,9 +32,6 @@ helm pull oci://quay.io/cilium/charts/cilium --version 1.18.11 --untar --untardi
 > ```bash
 > # Compare values files to identify what changed upstream
 > dyff between --ignore-whitespace-changes --ignore-order-changes /tmp/cilium/values.yaml MAINTENANCE.values.yaml
-> 
-> # Look specifically for image tags and new/removed configuration options
-> dyff between --omit-header /tmp/cilium/values.yaml MAINTENANCE.values.yaml | grep -E "(image|tag|version)"
 > ```
 
 ## 2. Updating the Cilium package

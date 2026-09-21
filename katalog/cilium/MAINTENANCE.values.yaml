@@ -8,7 +8,6 @@ image:
   repository: "registry.sighup.io/fury/cilium/cilium"
   tag: "v1.18.11"
   useDigest: false
-
 # -- Affinity for cilium-agent.
 affinity:
   podAntiAffinity:
@@ -17,11 +16,9 @@ affinity:
         labelSelector:
           matchLabels:
             k8s-app: cilium
-
 hubble:
   # -- Enable Hubble (true by default).
   enabled: true
-
   tls:
     # -- Enable mutual TLS for listenAddress. Setting this value to false is
     # highly discouraged as the Hubble API provides access to potentially
@@ -50,7 +47,6 @@ hubble:
         group: cert-manager.io
         kind: Issuer
         name: hubble-issuer
-
   metrics:
     tls:
       enabled: true
@@ -80,19 +76,15 @@ hubble:
   relay:
     # -- Enable Hubble Relay (requires hubble.enabled=true)
     enabled: true
-
     # -- Roll out Hubble Relay pods automatically when configmap is updated.
     rollOutPods: false
-
     # -- Hubble-relay container image.
     image:
       override: ~
       repository: "registry.sighup.io/fury/cilium/hubble-relay"
       tag: "v1.18.11"
-
       useDigest: false
       pullPolicy: "IfNotPresent"
-
     # -- Enable prometheus metrics for hubble-relay on the configured port at
     # /metrics
     prometheus:
@@ -115,28 +107,23 @@ hubble:
         relabelings: ~
         # -- Metrics relabeling configs for the ServiceMonitor hubble-relay
         metricRelabelings: ~
-
   ui:
     # -- Whether to enable the Hubble UI.
     enabled: true
-
     standalone:
       # -- When true, it will allow installing the Hubble UI only, without checking dependencies.
       # It is useful if a cluster already has cilium and Hubble relay installed and you just
       # want Hubble UI to be deployed.
       # When installed via helm, installing UI should be done via `helm upgrade` and when installed via the cilium cli, then `cilium hubble enable --ui`
       enabled: false
-
     backend:
       # -- Hubble-ui backend image.
       image:
         override: ~
         repository: "registry.sighup.io/fury/cilium/hubble-ui-backend"
         tag: "v0.13.5"
-
         useDigest: false
         pullPolicy: "IfNotPresent"
-
       resources: {}
       #   limits:
       #     cpu: 1000m
@@ -144,7 +131,6 @@ hubble:
       #   requests:
       #     cpu: 100m
       #     memory: 64Mi
-
     frontend:
       # -- Hubble-ui frontend image.
       image:
@@ -153,7 +139,6 @@ hubble:
         tag: "v0.13.5"
         useDigest: false
         pullPolicy: "IfNotPresent"
-
       # -- Resource requests and limits for the 'frontend' container of the 'hubble-ui' deployment.
       resources: {}
       #   limits:
@@ -166,14 +151,11 @@ hubble:
         # -- Controls server listener for ipv6
         ipv6:
           enabled: true
-
 # -- Method to use for identity allocation (`crd` or `kvstore`).
 identityAllocationMode: "crd"
-
 # -- (string) Time to wait before using new identity on endpoint identity change.
 # @default -- `"5s"`
 identityChangeGracePeriod: ""
-
 # -- Install Iptables rules to skip netfilter connection tracking on all pod
 # traffic. This option is only effective when Cilium is running in direct
 # routing and full KPR mode. Moreover, this option cannot be enabled when Cilium
@@ -187,7 +169,6 @@ ipam:
     clusterPoolIPv4MaskSize: 24
     clusterPoolIPv6PodCIDRList: ["fd00::/104"]
     clusterPoolIPv6MaskSize: 120
-
 defaultLBServiceIPAM: lbipam
 nodeIPAM:
   enabled: false
@@ -202,30 +183,24 @@ ipMasqAgent:
 
 # iptablesLockTimeout defines the iptables "--wait" option when invoked from Cilium.
 # iptablesLockTimeout: "5s"
-
 ipv4:
   # -- Enable IPv4 support.
   enabled: true
-
 ipv6:
   # -- Enable IPv6 support.
   enabled: false
-
 # -- Configure Kubernetes specific configuration
 k8s:
   # -- requireIPv4PodCIDR enables waiting for Kubernetes to provide the PodCIDR
   # range via the Kubernetes node resource
   requireIPv4PodCIDR: false
-
   # -- requireIPv6PodCIDR enables waiting for Kubernetes to provide the PodCIDR
   # range via the Kubernetes node resource
   requireIPv6PodCIDR: false
 # -- Enable Layer 7 network policy.
 l7Proxy: true
-
 # -- Enable Local Redirect Policy.
 localRedirectPolicy: false
-
 # To include or exclude matched resources from cilium identity evaluation
 # labels: ""
 
@@ -235,7 +210,6 @@ localRedirectPolicy: false
 
 # -- Enables periodic logging of system load
 logSystemLoad: false
-
 # -- Configure prometheus metrics on the configured port at /metrics
 prometheus:
   metricsService: true
@@ -267,14 +241,11 @@ prometheus:
   # metric_foo , -metric_bar to disable metric_bar).
   # ref: https://docs.cilium.io/en/stable/observability/metrics/
   metrics: ~
-
 operator:
   # -- Enable the cilium-operator component (required).
   enabled: true
-
   # -- Roll out cilium-operator pods automatically when configmap is updated.
   rollOutPods: false
-
   # -- cilium-operator image.
   image:
     override: ~
@@ -285,7 +256,6 @@ operator:
     # Result: registry.sighup.io/fury/cilium/operator-generic:v1.18.7
     repository: "registry.sighup.io/fury/cilium/operator"
     tag: "v1.18.11"
-
     useDigest: false
     pullPolicy: "IfNotPresent"
     suffix: ""
@@ -306,18 +276,14 @@ operator:
       # -- Enable service monitors.
       # This requires the prometheus CRDs to be available (see https://github.com/prometheus-operator/prometheus-operator/blob/master/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml)
       enabled: true
-
 nodeinit:
   # -- Enable the node initialization DaemonSet
   enabled: false
-
 preflight:
   # -- Enable Cilium pre-flight resources (required for upgrade)
   enabled: false
-
 envoy:
   enabled: false
-
 dashboards:
   enabled: true
   label: grafana-sighup-dashboard

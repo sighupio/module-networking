@@ -1,0 +1,35 @@
+# Copyright (c) 2017-present SIGHUP s.r.l All rights reserved.
+# Use of this source code is governed by a BSD-style
+# license that can be found in the LICENSE file.
+
+[tasks.upgrade-images]
+usage = '''
+arg <chart_version> help="Cilium helm chart version to update to (e.g., 1.19.8)"
+'''
+run = '''
+rm -rf /tmp/cilium
+echo "Upgrading images with helm chart version ${usage_chart_version}"
+helm pull oci://quay.io/cilium/charts/cilium --version ${usage_chart_version} --untar --untardir /tmp
+
+export CILIUM_VERSION=$(yq '.image.tag' /tmp/cilium/values.yaml)
+echo "Found Cilium version: $CILIUM_VERSION"
+yq -i '.image.tag = strenv(CILIUM_VERSION)' MAINTENANCE.values.yaml
+
+export HUBBLE_RELAY_VERSION=$(yq '.hubble.relay.image.tag' /tmp/cilium/values.yaml)
+echo "Found Hubble Relay version: $HUBBLE_RELAY_VERSION"
+yq -i '.hubble.relay.image.tag = strenv(HUBBLE_RELAY_VERSION)' MAINTENANCE.values.yaml
+
+export HUBBLE_UI_BE_VERSION=$(yq '.hubble.ui.backend.image.tag' /tmp/cilium/values.yaml)
+echo "Found Hubble UI backend version: $HUBBLE_UI_BE_VERSION"
+yq -i '.hubble.ui.backend.image.tag = strenv(HUBBLE_UI_BE_VERSION)' MAINTENANCE.values.yaml
+
+export HUBBLE_UI_FE_VERSION=$(yq '.hubble.ui.frontend.image.tag' /tmp/cilium/values.yaml)
+echo "Found Hubble UI frontend version: $HUBBLE_UI_FE_VERSION"
+yq -i '.hubble.ui.frontend.image.tag = strenv(HUBBLE_UI_FE_VERSION)' MAINTENANCE.values.yaml
+
+export OPERATOR_VERSION=$(yq '.operator.image.tag' /tmp/cilium/values.yaml)
+echo "Found Operator version: $OPERATOR_VERSION"
+yq -i '.operator.image.tag = strenv(OPERATOR_VERSION)' MAINTENANCE.values.yaml
+
+mise run //:add-license
+'''
