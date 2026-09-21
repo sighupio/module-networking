@@ -2,39 +2,6 @@
 # Use of this source code is governed by a BSD-style
 # license that can be found in the LICENSE file.
 
-[tasks.upgrade-images]
-usage = '''
-arg <chart_version> help="Cilium helm chart version to update to (e.g., 1.19.8)"
-'''
-run = '''
-rm -rf /tmp/cilium
-echo "Upgrading images with helm chart version ${usage_chart_version}"
-helm pull oci://quay.io/cilium/charts/cilium --version ${usage_chart_version} --untar --untardir /tmp
-
-export CILIUM_VERSION=$(yq '.image.tag' /tmp/cilium/values.yaml)
-echo "Found Cilium version: $CILIUM_VERSION"
-yq -i '.image.tag = strenv(CILIUM_VERSION)' MAINTENANCE.values.yaml
-
-export HUBBLE_RELAY_VERSION=$(yq '.hubble.relay.image.tag' /tmp/cilium/values.yaml)
-echo "Found Hubble Relay version: $HUBBLE_RELAY_VERSION"
-yq -i '.hubble.relay.image.tag = strenv(HUBBLE_RELAY_VERSION)' MAINTENANCE.values.yaml
-
-export HUBBLE_UI_BE_VERSION=$(yq '.hubble.ui.backend.image.tag' /tmp/cilium/values.yaml)
-echo "Found Hubble UI backend version: $HUBBLE_UI_BE_VERSION"
-yq -i '.hubble.ui.backend.image.tag = strenv(HUBBLE_UI_BE_VERSION)' MAINTENANCE.values.yaml
-
-export HUBBLE_UI_FE_VERSION=$(yq '.hubble.ui.frontend.image.tag' /tmp/cilium/values.yaml)
-echo "Found Hubble UI frontend version: $HUBBLE_UI_FE_VERSION"
-yq -i '.hubble.ui.frontend.image.tag = strenv(HUBBLE_UI_FE_VERSION)' MAINTENANCE.values.yaml
-
-export OPERATOR_VERSION=$(yq '.operator.image.tag' /tmp/cilium/values.yaml)
-echo "Found Operator version: $OPERATOR_VERSION"
-yq -i '.operator.image.tag = strenv(OPERATOR_VERSION)' MAINTENANCE.values.yaml
-
-mise run //:add-license
-rm -rf /tmp/cilium
-'''
-
 [tasks.diff-values]
 usage = '''
 arg <chart_version> help="Cilium helm chart version to compare against (e.g., 1.19.8)"
@@ -42,7 +9,7 @@ arg <chart_version> help="Cilium helm chart version to compare against (e.g., 1.
 run = '''
 rm -rf /tmp/cilium
 echo "Pulling cilium chart version ${usage_chart_version}"
-helm pull oci://quay.io/cilium/charts/cilium --version ${usage_chart_version} --untar --untardir /tmp || exit 1
+helm pull oci://quay.io/cilium/charts/cilium --version ${usage_chart_version} --untar --untardir /tmp
 
 echo "Merging MAINTENANCE.values.yaml over the new chart defaults"
 yq '. * load("MAINTENANCE.values.yaml")' \
@@ -51,4 +18,23 @@ yq '. * load("MAINTENANCE.values.yaml")' \
 dyff between --omit-header /tmp/cilium/values.yaml /tmp/cilium/effective-values.yaml
 
 rm -rf /tmp/cilium
+'''
+
+[tasks.upgrade-chart]
+usage = '''
+arg <chart_version> help="Cilium helm chart version to render (e.g., 1.19.8)"
+'''
+run = '''
+rm -rf /tmp/cilium
+echo "Pulling cilium chart version ${usage_chart_version}"
+helm pull oci://quay.io/cilium/charts/cilium --version ${usage_chart_version} --untar --untardir /tmp
+
+echo "Rendering resources/deploy.yaml with MAINTENANCE.values.yaml"
+helm template cilium /tmp/cilium \
+  --namespace kube-system \
+  --values MAINTENANCE.values.yaml \
+  --set prometheus.serviceMonitor.trustCRDsExist=true > resources/deploy.yaml || exit 1
+
+rm -rf /tmp/cilium
+mise run //:add-license
 '''
