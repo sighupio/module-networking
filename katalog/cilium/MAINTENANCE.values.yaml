@@ -5,7 +5,7 @@
 ---
 image:
   repository: "registry.sighup.io/fury/cilium/cilium"
-  tag: "v1.18.11"
+  tag: "v1.19.8"
 hubble:
   metrics:
     enabled:
@@ -32,7 +32,6 @@ hubble:
       annotations:
         grafana-folder: "Networking"
       labelValue: "true"
-
   tls:
     auto:
       method: certmanager
@@ -45,7 +44,7 @@ hubble:
     enabled: true
     image:
       repository: "registry.sighup.io/fury/cilium/hubble-relay"
-      tag: "v1.18.11"
+      tag: "v1.19.8"
     prometheus:
       enabled: true
       serviceMonitor:
@@ -55,12 +54,12 @@ hubble:
     backend:
       image:
         repository: "registry.sighup.io/fury/cilium/hubble-ui-backend"
-        tag: "v0.13.5"
+        tag: "v0.13.6"
         useDigest: false
     frontend:
       image:
         repository: "registry.sighup.io/fury/cilium/hubble-ui"
-        tag: "v0.13.5"
+        tag: "v0.13.6"
         useDigest: false
 prometheus:
   metricsService: true
@@ -75,7 +74,7 @@ operator:
     # printf "%s-%s%s%s%s" .Values.operator.image.repository $cloud .Values.operator.image.suffix $tag $imageDigest
     # Result: registry.sighup.io/fury/cilium/operator-generic:v1.18.7
     repository: "registry.sighup.io/fury/cilium/operator"
-    tag: "v1.18.11"
+    tag: "v1.19.8"
   dashboards:
     enabled: true
     label: grafana-sighup-dashboard
