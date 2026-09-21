@@ -1424,37 +1424,11 @@ spec:
         - name: hubble-tls
           mountPath: /var/lib/cilium/tls/hubble
           readOnly: true
-        - name: tmp
-          mountPath: /tmp
+        - name: cilium-config-path
+          mountPath: /tmp/cilium/config-map
+          readOnly: true
         
       initContainers:
-      - name: config
-        image: "registry.sighup.io/fury/cilium/cilium:v1.19.8"
-        imagePullPolicy: IfNotPresent
-        command:
-        - cilium-dbg
-        - build-config
-        env:
-        - name: K8S_NODE_NAME
-          valueFrom:
-            fieldRef:
-              apiVersion: v1
-              fieldPath: spec.nodeName
-        - name: CILIUM_K8S_NAMESPACE
-          valueFrom:
-            fieldRef:
-              apiVersion: v1
-              fieldPath: metadata.namespace
-        volumeMounts:
-        - name: tmp
-          mountPath: /tmp
-        terminationMessagePolicy: FallbackToLogsOnError
-        securityContext:
-          capabilities:
-            add:
-              - NET_ADMIN
-            drop:
-              - ALL
       # Required to mount cgroup2 filesystem on the underlying Kubernetes node.
       # We use nsenter command with host's cgroup and mount namespaces enabled.
       - name: mount-cgroup
@@ -1637,9 +1611,10 @@ spec:
       tolerations:
         - operator: Exists
       volumes:
-      # For sharing configuration between the "config" initContainer and the agent
-      - name: tmp
-        emptyDir: {}
+      # To read the configuration from the config map
+      - name: cilium-config-path
+        configMap:
+          name: cilium-config
         # To keep state between restarts / upgrades
       - name: cilium-run
         hostPath:

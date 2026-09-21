@@ -6,6 +6,12 @@
 image:
   repository: "registry.sighup.io/fury/cilium/cilium"
   useDigest: false
+# Workaround for https://github.com/cilium/cilium/issues/44464:
+# removes the build-config init container, which breaks kube-apiserver
+# connectivity on upgrade when kube-proxy is in IPVS mode.
+# Valid only because we configure Cilium via the cilium-config ConfigMap only.
+daemon:
+  configSources: "config-map:cilium-config"
 hubble:
   metrics:
     enabled:
