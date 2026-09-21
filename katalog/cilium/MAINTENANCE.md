@@ -13,21 +13,17 @@ mise run upgrade-images 1.18.11
 
 ## 2. Keep the helm-values file updated
 
-2.1. Download the upstream manifests
+`MAINTENANCE.values.yaml` contains only the values that override the chart defaults.
+To check your overrides against a new chart version (e.g. `1.19.8`):
 
 ```bash
-helm pull oci://quay.io/cilium/charts/cilium --version1.18.11 --untar --untardir /tmp
+mise run diff-values 1.19.8
 ```
 
-2.2. Compare the `MAINTENANCE.values.yaml` with the one from the chart `/tmp/cilium/values.yaml` and port the changes that are needed. For example, check that parameters that were in use are still valid.
-
-> 💡 **TIP**
-> You can use a YAML and Kubernetes-aware tool like [Dyff](https://github.com/homeport/dyff) to compare the files. Dyff will help you to identify the differences between the manifests in a more human-readable way.
->
-> ```bash
-> # Compare values files to identify what changed upstream
-> dyff between --ignore-whitespace-changes --ignore-order-changes /tmp/cilium/values.yaml MAINTENANCE.values.yaml
-> ```
+The task pulls the chart, merges `MAINTENANCE.values.yaml` over its defaults
+and shows the effective overrides with `dyff`. Port the changes that are
+needed: check that parameters in use are still valid, and drop values that
+became chart defaults.
 
 ## 3. Updating the Cilium package
 
