@@ -45,8 +45,8 @@ echo "Pulling cilium chart version ${usage_chart_version}"
 helm pull oci://quay.io/cilium/charts/cilium --version ${usage_chart_version} --untar --untardir /tmp || exit 1
 
 echo "Merging MAINTENANCE.values.yaml over the new chart defaults"
-yq eval-all 'select(fileIndex == 0) * select(fileIndex == 1)' \
-  /tmp/cilium/values.yaml MAINTENANCE.values.yaml > /tmp/cilium/effective-values.yaml
+yq '. * load("MAINTENANCE.values.yaml")' \
+  /tmp/cilium/values.yaml > /tmp/cilium/effective-values.yaml
 
 dyff between --omit-header /tmp/cilium/values.yaml /tmp/cilium/effective-values.yaml
 
