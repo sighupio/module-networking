@@ -32,4 +32,5 @@ echo "Found Operator version: $OPERATOR_VERSION"
 yq -i '.operator.image.tag = strenv(OPERATOR_VERSION)' MAINTENANCE.values.yaml
 
 mise run //:add-license
+rm -rf /tmp/cilium
 '''

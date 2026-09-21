@@ -11,20 +11,15 @@ mise run upgrade-images <chart_version>
 mise run upgrade-images 1.18.11
 ```
 
-
 ## 2. Keep the helm-values file updated
 
-1.1. Download the upstream manifests
+2.1. Download the upstream manifests
 
 ```bash
-helm pull oci://quay.io/cilium/charts/cilium --version 1.18.11 --untar --untardir /tmp
+helm pull oci://quay.io/cilium/charts/cilium --version1.18.11 --untar --untardir /tmp
 ```
 
-> [!IMPORTANT]
-> We stay in Cilium 1.18.x until this issue gets fixed or we move away from kubelet in IPVS mode:
-> https://github.com/cilium/cilium/issues/44464
-
-1.2. Compare the `MAINTENANCE.values.yaml` with the one from the chart `/tmp/cilium/values.yaml` and port the changes that are needed. For example, check that parameters that were in use are still valid.
+2.2. Compare the `MAINTENANCE.values.yaml` with the one from the chart `/tmp/cilium/values.yaml` and port the changes that are needed. For example, check that parameters that were in use are still valid.
 
 > 💡 **TIP**
 > You can use a YAML and Kubernetes-aware tool like [Dyff](https://github.com/homeport/dyff) to compare the files. Dyff will help you to identify the differences between the manifests in a more human-readable way.
@@ -34,9 +29,9 @@ helm pull oci://quay.io/cilium/charts/cilium --version 1.18.11 --untar --untardi
 > dyff between --ignore-whitespace-changes --ignore-order-changes /tmp/cilium/values.yaml MAINTENANCE.values.yaml
 > ```
 
-## 2. Updating the Cilium package
+## 3. Updating the Cilium package
 
-2.1. Render the manifests from the upstream Chart with Hubble enabled:
+3.1. Render the manifests from the upstream Chart with Hubble enabled:
 
 ```bash
 helm template cilium /tmp/cilium \
@@ -46,14 +41,14 @@ helm template cilium /tmp/cilium \
   > upstream.yaml
 ```
 
-2.2. Compare the file `upstream.yaml` against `resources/deploy.yaml` to check the differences and port the changes needed.
+3.2. Compare the file `upstream.yaml` against `resources/deploy.yaml` to check the differences and port the changes needed.
 
 ```bash
 # Compare hubble deployments 
 dyff between --ignore-whitespace-changes --ignore-order-changes resources/deploy.yaml upstream.yaml
 ```
 
-2.3. Run e2e-locally (make sure you have Docker running):
+3.3. Run e2e-locally (make sure you have Docker running):
 
 ```bash
 mise run e2e-cilium
