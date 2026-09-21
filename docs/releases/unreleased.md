@@ -6,14 +6,14 @@ This release adds support for Kubernetes 1.36 and officially drops support for K
 
 ## Packages version 🚢
 
-| Component         | Current Version                                                        | Previous Version |
-|-------------------|------------------------------------------------------------------------|------------------|
-| `cilium`          | [`v1.18.11`](https://github.com/cilium/cilium/releases/tag/v1.18.11)   | `No Update`      |
-| `tigera-operator` | [`v1.40.13`](https://github.com/tigera/operator/releases/tag/v1.40.13) | `No Update`      |
+| Component         | Current Version                                                      | Previous Version |
+|-------------------|----------------------------------------------------------------------|------------------|
+| `cilium`          | [`v1.18.11`](https://github.com/cilium/cilium/releases/tag/v1.18.11) | `No Update`      |
+| `tigera-operator` | [`v1.42.6`](https://github.com/tigera/operator/releases/tag/v1.42.6) | `v1.40.13`       |
 
 ## Breaking Changes 💔
 
-TBD
+- **`AdminNetworkPolicy` and `BaselineAdminNetworkPolicy` are no longer supported by Calico.** Calico v3.32 does not install their CRDs and does not enforce these resources. If you use them, migrate to [`ClusterNetworkPolicy`](https://github.com/kubernetes-sigs/network-policy-api) before upgrading.
 
 ## Update Guide 🦮
 
@@ -22,6 +22,9 @@ TBD
 ```bash
 kustomize build katalog/tigera/on-prem | kubectl apply -f -
 ```
+
+> [!IMPORTANT]
+> This release deploys the Calico API Server (new `calico-system/calico-apiserver` pods). Since Calico v3.32 the Goldmane, Whisker and Tiers components use the `projectcalico.org/v3` API served by it, so the `APIServer` resource is now required: without it the operator reports those components as degraded. It is part of `katalog/tigera/on-prem`, so applying the package takes care of it.
 
 ### Cilium
 

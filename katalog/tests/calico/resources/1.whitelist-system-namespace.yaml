@@ -8,7 +8,7 @@ metadata:
   name: whitelist-system-ns
 spec:
   order: 1
-  selector: projectcalico.org/namespace in {'default', 'ingress-nginx', 'istio-system', 'kube-system', 'logging', 'monitoring', 'registry','gatekeeper-system','cert-manager'}
+  selector: projectcalico.org/namespace in {'default', 'ingress-nginx', 'istio-system', 'kube-system', 'logging', 'monitoring', 'registry','gatekeeper-system','cert-manager','calico-system'}
   types:
     - Ingress
     - Egress

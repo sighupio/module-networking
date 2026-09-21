@@ -2,7 +2,7 @@
 # Use of this source code is governed by a BSD-style
 # license that can be found in the LICENSE file.
 
-[tasks."maintenance"]
+[tasks.maintenance]
 description = "Run maintenance task to upgrade the package with upstream changes"
 usage = '''
 arg <version> help="Calico version to update to (e.g., v3.31.6)"
@@ -60,7 +60,7 @@ curl -sS --fail "https://raw.githubusercontent.com/projectcalico/calico/${usage_
 # Update the dummy deployment versions
 sed "${SED_INPLACE[@]}" "s|image: registry.sighup.io/fury/(.*):(.*)|image: registry.sighup.io/fury/\1:${usage_version?}|g" operator/dummy-dictionary-calico-images.yaml
 # Re-add license headers
-mise run add-license
+mise run //:add-license
 
 
 echo "✅ Updated Calico to version ${usage_version?}"
