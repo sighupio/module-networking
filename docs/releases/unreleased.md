@@ -8,7 +8,7 @@ This release adds support for Kubernetes 1.36 and officially drops support for K
 
 | Component         | Current Version                                                      | Previous Version |
 |-------------------|----------------------------------------------------------------------|------------------|
-| `cilium`          | [`v1.18.11`](https://github.com/cilium/cilium/releases/tag/v1.18.11) | `No Update`      |
+| `cilium`          | [`v1.19.8`](https://github.com/cilium/cilium/releases/tag/v1.19.8)   | `v1.18.11`       |
 | `tigera-operator` | [`v1.42.6`](https://github.com/tigera/operator/releases/tag/v1.42.6) | `v1.40.13`       |
 
 ## Breaking Changes 💔
