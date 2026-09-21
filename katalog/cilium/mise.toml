@@ -34,3 +34,21 @@ yq -i '.operator.image.tag = strenv(OPERATOR_VERSION)' MAINTENANCE.values.yaml
 mise run //:add-license
 rm -rf /tmp/cilium
 '''
+
+[tasks.diff-values]
+usage = '''
+arg <chart_version> help="Cilium helm chart version to compare against (e.g., 1.19.8)"
+'''
+run = '''
+rm -rf /tmp/cilium
+echo "Pulling cilium chart version ${usage_chart_version}"
+helm pull oci://quay.io/cilium/charts/cilium --version ${usage_chart_version} --untar --untardir /tmp || exit 1
+
+echo "Merging MAINTENANCE.values.yaml over the new chart defaults"
+yq eval-all 'select(fileIndex == 0) * select(fileIndex == 1)' \
+  /tmp/cilium/values.yaml MAINTENANCE.values.yaml > /tmp/cilium/effective-values.yaml
+
+dyff between --omit-header /tmp/cilium/values.yaml /tmp/cilium/effective-values.yaml
+
+rm -rf /tmp/cilium
+'''
