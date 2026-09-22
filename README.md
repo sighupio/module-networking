@@ -27,10 +27,10 @@ Kubernetes adopts the Container Network Interface (CNI) specification for managi
 
 The following packages are included in Networking Module:
 
-| Package                  | Version                     | Description                                                                                                                                          |
-| ------------------------ | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [cilium](katalog/cilium) | `1.18.11`                   | [Cilium][cilium-page] CNI plugin. For clusters with `< 200` nodes.                                                                                   |
-| [tigera](katalog/tigera) | `1.40.13` (Calico `3.31.6`) | [Tigera Operator][tigera-page], a Kubernetes Operator for Calico, provides pre-configured installations for on-prem and for EKS in policy-only mode. |
+| Package                  | Version                       | Description                                                                                                                                          |
+| ------------------------ | ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [cilium](katalog/cilium) | `v1.19.8`                     | [Cilium][cilium-page] CNI plugin. For clusters with `< 200` nodes.                                                                                   |
+| [tigera](katalog/tigera) | `v1.40.13` (Calico `v3.31.6`) | [Tigera Operator][tigera-page], a Kubernetes Operator for Calico, provides pre-configured installations for on-prem and for EKS in policy-only mode. |
 
 Click on each package to see its full documentation.
 

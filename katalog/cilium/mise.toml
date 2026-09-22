@@ -1,0 +1,40 @@
+# Copyright (c) 2017-present SIGHUP s.r.l All rights reserved.
+# Use of this source code is governed by a BSD-style
+# license that can be found in the LICENSE file.
+
+[tasks.diff-values]
+usage = '''
+arg <chart_version> help="Cilium helm chart version to compare against (e.g., 1.19.8)"
+'''
+run = '''
+rm -rf /tmp/cilium
+echo "Pulling cilium chart version ${usage_chart_version}"
+helm pull oci://quay.io/cilium/charts/cilium --version ${usage_chart_version} --untar --untardir /tmp
+
+echo "Merging MAINTENANCE.values.yaml over the new chart defaults"
+yq '. * load("MAINTENANCE.values.yaml")' \
+  /tmp/cilium/values.yaml > /tmp/cilium/effective-values.yaml
+
+dyff between --omit-header /tmp/cilium/values.yaml /tmp/cilium/effective-values.yaml
+
+rm -rf /tmp/cilium
+'''
+
+[tasks.upgrade-chart]
+usage = '''
+arg <chart_version> help="Cilium helm chart version to render (e.g., 1.19.8)"
+'''
+run = '''
+rm -rf /tmp/cilium
+echo "Pulling cilium chart version ${usage_chart_version}"
+helm pull oci://quay.io/cilium/charts/cilium --version ${usage_chart_version} --untar --untardir /tmp
+
+echo "Rendering resources/deploy.yaml with MAINTENANCE.values.yaml"
+helm template cilium /tmp/cilium \
+  --namespace kube-system \
+  --values MAINTENANCE.values.yaml \
+  --set prometheus.serviceMonitor.trustCRDsExist=true > resources/deploy.yaml || exit 1
+
+rm -rf /tmp/cilium
+mise run //:add-license
+'''

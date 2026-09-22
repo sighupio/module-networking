@@ -1,52 +1,33 @@
 # Cilium Package Maintenance Guide
 
 To update the Cilium package with upstream, please follow the next steps.
+Image tags are not pinned in `MAINTENANCE.values.yaml`: they follow the chart
+version's defaults, so upgrading means rendering with the new chart.
 
-## 1. Updating the values file
+## 1. Compare the helm values with the new chart
 
-1.1. Download the upstream manifests
-
-```bash
-helm pull oci://quay.io/cilium/charts/cilium --version 1.18.11 --untar --untardir /tmp
-```
-
-> [!IMPORTANT]
-> We stay in Cilium 1.18.x until this issue gets fixed or we move away from kubelet in IPVS mode:
-> https://github.com/cilium/cilium/issues/44464
-
-1.2. Compare the `MAINTENANCE.values.yaml` with the one from the chart `/tmp/cilium/values.yaml` and port the changes that are needed. For example, update the image tags and check that parameters that were in use are still valid.
-
-> 💡 **TIP**
-> You can use a YAML and Kubernetes-aware tool like [Dyff](https://github.com/homeport/dyff) to compare the files. Dyff will help you to identify the differences between the manifests in a more human-readable way.
->
-> ```bash
-> # Compare values files to identify what changed upstream
-> dyff between --ignore-whitespace-changes --ignore-order-changes /tmp/cilium/values.yaml MAINTENANCE.values.yaml
-> 
-> # Look specifically for image tags and new/removed configuration options
-> dyff between --omit-header /tmp/cilium/values.yaml MAINTENANCE.values.yaml | grep -E "(image|tag|version)"
-> ```
-
-## 2. Updating the Cilium package
-
-2.1. Render the manifests from the upstream Chart with Hubble enabled:
+`MAINTENANCE.values.yaml` contains only the values that override the chart
+defaults. To check your overrides against a new chart version (e.g. `1.19.8`):
 
 ```bash
-helm template cilium /tmp/cilium \
-  --namespace kube-system \
-  --values MAINTENANCE.values.yaml \
-  --set prometheus.serviceMonitor.trustCRDsExist=true \
-  > upstream.yaml
+mise run diff-values 1.19.8
 ```
 
-2.2. Compare the file `upstream.yaml` against `resources/deploy.yaml` to check the differences and port the changes needed.
+The task pulls the chart, merges `MAINTENANCE.values.yaml` over its defaults
+and shows the effective overrides with `dyff`. Port the changes that are
+needed: check that parameters in use are still valid, and drop values that
+became chart defaults.
+
+## 2. Render the new manifests
 
 ```bash
-# Compare hubble deployments 
-dyff between --ignore-whitespace-changes --ignore-order-changes resources/deploy.yaml upstream.yaml
+mise run upgrade-chart 1.19.8
 ```
 
-2.3. Run e2e-locally (make sure you have Docker running):
+The task pulls the chart, renders it with `MAINTENANCE.values.yaml` and
+rewrites `resources/deploy.yaml`. Review the changes with `git diff`.
+
+## 3. Run e2e-locally (make sure you have Docker running)
 
 ```bash
 mise run e2e-cilium
