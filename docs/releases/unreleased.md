@@ -14,6 +14,8 @@ This release adds support for Kubernetes 1.36 and officially drops support for K
 ## Breaking Changes 💔
 
 - **`AdminNetworkPolicy` and `BaselineAdminNetworkPolicy` are no longer supported by Calico.** Calico v3.32 does not install their CRDs and does not enforce these resources. If you use them, migrate to [`ClusterNetworkPolicy`](https://github.com/kubernetes-sigs/network-policy-api) before upgrading.
+- **Cilium: `CiliumBGPPeeringPolicy` (BGPv1) API removed, `CiliumLoadBalancerIPPool` `v2alpha1` deprecated.** If you use BGP, migrate to the `cilium.io/v2` APIs (`CiliumBGPClusterConfig`, `CiliumBGPPeerConfig`, `CiliumBGPAdvertisement`) before upgrading. Move custom `CiliumLoadBalancerIPPool` manifests from `apiVersion: cilium.io/v2alpha1` to `cilium.io/v2`.
+- **Cilium: deprecated Network Policy fields now rejected, DNS wildcard semantics changed.** Remove `FromRequires`/`ToRequires` from your policies (now enforced empty) and review DNS patterns starting with `**.`, which now match multiple subdomains.
 
 ## Update Guide 🦮
 
@@ -28,19 +30,6 @@ kustomize build katalog/tigera/on-prem | kubectl apply -f -
 
 ### Cilium
 
-> [!NOTE]
-> If you were using the `core` only variant of Cilium, you will now get the one with Hubble instead.
->
-> If you were pointing to the `core` package (`katalog/cilium/core`) or the `hubble` package (`katalog/cilium/hubble`) directly, update the reference to `katalog/cilium`.
->
-> See the Breaking changes section for more details.
-
-ConfigMaps holding Grafana Dashboards for Cilium have changed name to use the same as upstream. If you are using `kubectl apply` you need to manually delete the old configmaps before applying the new ones:
-
-```bash
-kubectl delete configmap -n kube-system cilium-grafana-dashboard hubble-grafana-dashboard
-```
-
 Apply the Kustomize project with the new version:
 
 ```bash
@@ -48,10 +37,6 @@ kustomize build katalog/cilium | kubectl apply -f -
 ```
 
 > [!IMPORTANT]
-> The new single package introduces a cyclic dependency between Cilium and cert-manager. Hubble (deployed together with Cilium) requires cert-manager, and cert-manager requires at least some nodes to be ready (CNI working) to be scheduled.
->
-> You may need to adjust your deployment strategy while switching to the unified package.
->
-> For example, if you are using a tool that verifies dependencies (like Carvel `kapp`) you may apply cert-manager and cilium together in the same `kapp deploy` command.
->
-> If you are using plain `kubectl apply` instead, you will see some messages saying that the resources that require cert-manager (like `Certificate`, `Issuer`, etc.) are not being deployed. You will need to re-apply the cilium package after you've deployed cert-manager so Hubble works.
+> Hubble (deployed together with Cilium) requires cert-manager. If you are using plain `kubectl apply`, resources that require cert-manager (like `Certificate`) may not be deployed on the first pass: re-apply the Cilium package after you've deployed cert-manager so Hubble works.
+
+If you use ClusterMesh together with Network Policies, note that `policy-default-local-cluster` is now `true` by default: selectors without an explicit cluster only select local endpoints. Either update your policies to select remote clusters explicitly or set `policy-default-local-cluster` back to `false`. See the [upstream upgrade notes](https://docs.cilium.io/en/v1.19/operations/upgrade/#current-release-required-changes) for details.
