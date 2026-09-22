@@ -27,10 +27,10 @@ Kubernetes adopts the Container Network Interface (CNI) specification for managi
 
 The following packages are included in Networking Module:
 
-| Package                  | Version                       | Description                                                                                                                                          |
-| ------------------------ | ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [cilium](katalog/cilium) | `v1.19.8`                     | [Cilium][cilium-page] CNI plugin. For clusters with `< 200` nodes.                                                                                   |
-| [tigera](katalog/tigera) | `v1.40.13` (Calico `v3.31.6`) | [Tigera Operator][tigera-page], a Kubernetes Operator for Calico, provides pre-configured installations for on-prem and for EKS in policy-only mode. |
+| Package                  | Version                      | Description                                                                                                                                          |
+|--------------------------|------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [cilium](katalog/cilium) | `v1.19.8`                    | [Cilium][cilium-page] CNI plugin. For clusters with `< 200` nodes.                                                                                   |
+| [tigera](katalog/tigera) | `v1.42.6` (Calico `v3.32.2`) | [Tigera Operator][tigera-page], a Kubernetes Operator for Calico, provides pre-configured installations for on-prem and for EKS in policy-only mode. |
 
 Click on each package to see its full documentation.
 
@@ -38,10 +38,10 @@ Click on each package to see its full documentation.
 
 | Kubernetes Version |   Compatibility    | Notes           |
 | ------------------ | :----------------: | --------------- |
-| `1.32.x`           | :white_check_mark: | No known issues |
 | `1.33.x`           | :white_check_mark: | No known issues |
 | `1.34.x`           | :white_check_mark: | No known issues |
 | `1.35.x`           | :white_check_mark: | No known issues |
+| `1.36.x`           | :white_check_mark: | No known issues |
 
 Check the [compatibility matrix][compatibility-matrix] for additional information about previous releases of the module.
 
