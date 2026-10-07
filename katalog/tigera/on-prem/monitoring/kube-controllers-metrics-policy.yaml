@@ -1,0 +1,36 @@
+# Copyright (c) 2017-present SIGHUP s.r.l All rights reserved.
+# Use of this source code is governed by a BSD-style
+# license that can be found in the LICENSE file.
+
+---
+# Since Tigera Operator v1.42 the operator also creates, on Calico OSS, the policies of the `calico-system` tier
+# (order 100, defaultAction Deny, evaluated before any Kubernetes NetworkPolicy).
+# `calico-system.kube-controller-access` allows the metrics port (9094) only from the Calico Enterprise Prometheus
+# (`tigera-prometheus` namespace), so the calico-kube-controllers ServiceMonitor in `sm.yaml` would be denied.
+# This policy, in the same tier, allows the Prometheus deployed by the monitoring module to scrape it.
+#
+# It is defined with the `crd.projectcalico.org/v1` API on purpose: the CRD is part of this package, while the
+# `projectcalico.org/v3` API is served by the calico-apiserver and is not available on the first apply.
+# The name and the `projectcalico.org/tier` label follow the format the calico-apiserver uses to store tiered policies.
+apiVersion: crd.projectcalico.org/v1
+kind: NetworkPolicy
+metadata:
+  name: calico-system.prometheus-kube-controllers-metrics
+  namespace: calico-system
+  labels:
+    projectcalico.org/tier: calico-system
+spec:
+  tier: calico-system
+  order: 0
+  selector: k8s-app == 'calico-kube-controllers'
+  types:
+    - Ingress
+  ingress:
+    - action: Allow
+      protocol: TCP
+      source:
+        namespaceSelector: projectcalico.org/name == 'monitoring'
+        selector: app.kubernetes.io/name == 'prometheus'
+      destination:
+        ports:
+          - 9094
