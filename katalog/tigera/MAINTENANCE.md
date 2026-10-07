@@ -75,6 +75,16 @@ relabelings:
 
 When updating, verify the relabeling is still present on the calico-typha ServiceMonitor.
 
+#### calico-kube-controllers metrics policy
+
+Since Tigera Operator v1.42 (upstream PR [#4489](https://github.com/tigera/operator/pull/4489)) the operator creates the `calico-system` tier policies on Calico OSS too. The tier is evaluated before Kubernetes NetworkPolicies and its default action is `Deny`. `calico-system.kube-controller-access` allows the metrics port `9094` only from the Calico Enterprise Prometheus (`tigera-prometheus` namespace), so the scrape from the monitoring module's Prometheus is denied.
+
+`monitoring/kube-controllers-metrics-policy.yaml` adds a policy in the `calico-system` tier that allows `9094` from the `monitoring` namespace pods labelled `app.kubernetes.io/name: prometheus`. It uses the `crd.projectcalico.org/v1` API because `projectcalico.org/v3` is served by the calico-apiserver, which is not available on the first apply.
+
+When updating, check:
+
+- whether upstream made the Prometheus source of `calico-system.kube-controller-access` configurable, in which case the custom policy can be dropped;
+- that the metrics port (`prometheusMetricsPort` in `KubeControllersConfiguration`, default `9094`) is unchanged.
 #### Alerts
 
 Calico / Tigera upstream does not provide a set of Prometheus Rules that we could include, from [their monitoring documentation](https://projectcalico.docs.tigera.io/maintenance/monitor/monitor-component-metrics) here are the available metrics:

@@ -8,6 +8,7 @@ kind: Kustomization
 resources:
   - sm.yaml
   - prometheusrules.yaml
+  - kube-controllers-metrics-policy.yaml
 
 generatorOptions:
   labels:
